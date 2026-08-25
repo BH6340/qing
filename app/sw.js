@@ -1,6 +1,6 @@
 /* 轻 · 日历 Service Worker */
 
-const CACHE_NAME = 'qing-cache-v1';
+const CACHE_NAME = 'qing-cache-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -56,4 +56,13 @@ self.addEventListener('fetch', (event) => {
       return cached || fetchPromise;
     })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'clear-cache') {
+    caches.keys().then(keys => {
+      keys.forEach(key => caches.delete(key));
+    });
+    self.skipWaiting();
+  }
 });

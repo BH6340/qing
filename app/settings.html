@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f5f2ed">
-<title>设置 · 轻日历</title>
+<title>设置 · 轻日�?/title>
 <link rel="stylesheet" href="css/style.css">
 <style>
   /* Settings page specific styles */
@@ -256,7 +256,7 @@
     position: relative;
   }
   .changelog li::before {
-    content: '•';
+    content: '�?;
     position: absolute;
     left: 0;
     color: var(--accent);
@@ -268,10 +268,10 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="icon-btn" onclick="location.href='index.html?from=settings'">
+    <div class="icon-btn" onclick="location.href='index.html'">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
-    <div class="title">设 置</div>
+    <div class="title">�?�?/div>
     <div class="icon-btn" style="visibility:hidden;">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
@@ -279,8 +279,8 @@
 
   <!-- App info -->
   <div class="app-info">
-    <div class="app-logo">轻</div>
-    <div class="app-name">轻 · 日历</div>
+    <div class="app-logo">�?/div>
+    <div class="app-name">�?· 日历</div>
     <div class="app-version">QING · v1.0.0</div>
   </div>
 
@@ -315,7 +315,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">导入数据</div>
-          <div class="setting-desc">从 JSON 文件恢复数据</div>
+          <div class="setting-desc">�?JSON 文件恢复数据</div>
         </div>
         <div class="setting-arrow">
           <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -336,7 +336,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">毒舌模式</div>
-          <div class="setting-desc">让文案更扎心一些</div>
+          <div class="setting-desc">让文案更扎心一�?/div>
         </div>
         <div class="toggle" id="sarcasmToggle"></div>
       </div>
@@ -356,7 +356,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">版本更新</div>
-          <div class="setting-desc">检查是否有新版本</div>
+          <div class="setting-desc">检查是否有新版�?/div>
         </div>
         <span class="version-badge" id="versionBadge">v1.0.0</span>
       </div>
@@ -370,8 +370,8 @@
           </svg>
         </div>
         <div class="setting-content">
-          <div class="setting-label">关于轻日历</div>
-          <div class="setting-desc">极简体重与待办记录工具</div>
+          <div class="setting-label">关于轻日�?/div>
+          <div class="setting-desc">极简体重与待办记录工�?/div>
         </div>
         <div class="setting-arrow">
           <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -392,7 +392,7 @@
           </svg>
         </div>
         <div class="setting-content">
-          <div class="setting-label">清空所有数据</div>
+          <div class="setting-label">清空所有数�?/div>
           <div class="setting-desc">删除所有记录，不可恢复</div>
         </div>
         <div class="setting-arrow">
@@ -403,8 +403,8 @@
   </div>
 
   <div class="footer">
-    轻 · 日历 · QING<br>
-    Made with <span class="heart">♥</span> for a lighter you
+    �?· 日历 · QING<br>
+    Made with <span class="heart">�?/span> for a lighter you
   </div>
 </div>
 
@@ -429,26 +429,23 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">版本更新</div>
-    <div class="modal-subtitle" id="versionSubtitle">当前已是最新版本</div>
+    <div class="modal-subtitle" id="versionSubtitle">当前已是最新版�?/div>
 
     <div class="version-detail">
       <div class="ver-num" id="verNum">v1.0.0</div>
       <div class="ver-label">当前版本</div>
     </div>
 
-    <div class="changelog">
-      <h4>更新内容</h4>
-      <ul>
-        <li>体重日历记录，直观显示每日变化</li>
-        <li>每日待办清单，支持常用任务快速添加</li>
-        <li>日笺随笔，记录心情与每日感想</li>
-        <li>数据本地存储，支持导入导出</li>
-        <li>简约纸墨风格设计</li>
-      </ul>
+    <div id="changelogBox" style="display:none;">
+      <div class="changelog">
+        <h4>更新内容</h4>
+        <ul id="changelogList"></ul>
+      </div>
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-primary" onclick="closeVersionModal()">知道了</button>
+      <button class="btn btn-ghost" onclick="closeVersionModal()">关闭</button>
+      <button class="btn btn-primary" id="downloadBtn" style="display:none;" onclick="downloadAndUpdate()">下载安装</button>
     </div>
   </div>
 </div>
@@ -457,20 +454,19 @@
 <div class="modal-overlay" id="aboutModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">关于轻日历</div>
+    <div class="modal-title">关于轻日�?/div>
 
     <div style="text-align:center; padding: 20px 0;">
-      <div style="width:64px;height:64px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent-light),var(--accent));border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;box-shadow:0 6px 20px rgba(196,149,106,0.3);">轻</div>
-      <div style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;letter-spacing:3px;">轻 · 日历</div>
+      <div style="width:64px;height:64px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent-light),var(--accent));border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;box-shadow:0 6px 20px rgba(196,149,106,0.3);">�?/div>
+      <div style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;letter-spacing:3px;">�?· 日历</div>
       <div style="font-size:12px;color:var(--ink-mute);margin-top:4px;letter-spacing:2px;">QING · v1.0.0</div>
     </div>
 
     <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;text-align:center;padding: 0 12px 24px;">
-      一款极简的体重记录与待办工具。<br>
-      纸墨质感设计，低调又高级。<br>
-      数据本地存储，隐私安全无忧。<br><br>
-      愿你每天都比昨天更轻盈一点。
-    </div>
+      一款极简的体重记录与待办工具�?br>
+      纸墨质感设计，低调又高级�?br>
+      数据本地存储，隐私安全无忧�?br><br>
+      愿你每天都比昨天更轻盈一点�?    </div>
 
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="closeAbout()">好的</button>
@@ -480,15 +476,14 @@
 
 <script src="js/storage.js"></script>
 <script>
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 let confirmCallback = null;
 
 // ===== Init =====
 function init() {
   Store.load();
 
-  // 毒舌开关状态
-  const settings = Store.getSettings();
+  // 毒舌开关状�?  const settings = Store.getSettings();
   updateToggle('sarcasmToggle', settings.sarcasm);
 }
 
@@ -504,7 +499,7 @@ function toggleSarcasm() {
   const newValue = !settings.sarcasm;
   Store.updateSetting('sarcasm', newValue);
   updateToggle('sarcasmToggle', newValue);
-  Store.toast(newValue ? '毒舌模式已开启' : '毒舌模式已关闭');
+  Store.toast(newValue ? '毒舌模式已开�? : '毒舌模式已关�?);
 }
 
 // ===== Export / Import =====
@@ -525,7 +520,7 @@ function exportData() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  Store.toast('数据已导出 ✓');
+  Store.toast('数据已导�?�?);
 }
 
 function importData() {
@@ -544,10 +539,10 @@ function handleImportFile(event) {
       () => {
         const success = Store.importData(e.target.result);
         if (success) {
-          Store.toast('数据导入成功 ✓');
+          Store.toast('数据导入成功 �?);
           setTimeout(() => location.reload(), 1000);
         } else {
-          Store.toast('导入失败：文件格式错误');
+          Store.toast('导入失败：文件格式错�?);
         }
       }
     );
@@ -559,11 +554,11 @@ function handleImportFile(event) {
 // ===== Reset =====
 function confirmReset() {
   showConfirm(
-    '清空所有数据',
+    '清空所有数�?,
     '此操作将删除所有体重记录、待办任务和日笺数据，且不可恢复。确定要继续吗？',
     () => {
       Store.resetAll();
-      Store.toast('数据已清空');
+      Store.toast('数据已清�?);
       setTimeout(() => location.reload(), 1000);
     }
   );
@@ -588,22 +583,130 @@ function doConfirm() {
 }
 
 // ===== Version =====
+const API_BASE = 'https://qing6340.duckdns.org';
+const isNativeApp = window.Capacitor && window.Capacitor.isNative;
+let updateInfo = null;
+
 function checkUpdate() {
-  // 模拟版本检查（实际项目中调用后端 API）
   const badge = document.getElementById('versionBadge');
   badge.textContent = '检查中...';
 
-  setTimeout(() => {
-    badge.textContent = 'v' + APP_VERSION;
-    // 模拟：当前已是最新版
-    openVersionModal(false);
-  }, 800);
+  fetch(API_BASE + '/api/version?current=' + APP_VERSION)
+    .then(r => r.json())
+    .then(data => {
+      badge.textContent = 'v' + APP_VERSION;
+      if (data.has_update) {
+        updateInfo = data;
+        openVersionModal(true, data);
+      } else {
+        openVersionModal(false, data);
+      }
+    })
+    .catch(() => {
+      badge.textContent = 'v' + APP_VERSION;
+      document.getElementById('versionSubtitle').textContent = '检查失败，请稍后重�?;
+      document.getElementById('verNum').textContent = 'v' + APP_VERSION;
+      document.getElementById('changelogBox').style.display = 'none';
+      document.getElementById('downloadBtn').style.display = 'none';
+      document.getElementById('versionModal').classList.add('active');
+    });
 }
 
-function openVersionModal(hasUpdate) {
-  document.getElementById('versionSubtitle').textContent = hasUpdate ? '有新版本可用' : '当前已是最新版本';
+function openVersionModal(hasUpdate, data) {
+  document.getElementById('versionSubtitle').textContent = hasUpdate ? '有新版本可用' : '当前已是最新版�?;
   document.getElementById('verNum').textContent = 'v' + APP_VERSION;
+
+  const changelogBox = document.getElementById('changelogBox');
+  const changelogList = document.getElementById('changelogList');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  if (hasUpdate && data) {
+    changelogBox.style.display = 'block';
+    changelogList.innerHTML = '';
+    const changes = data.changelog || [];
+    if (typeof changes === 'string') {
+      changes.split('\n').forEach(line => {
+        if (line.trim()) {
+          const li = document.createElement('li');
+          li.textContent = line.trim();
+          changelogList.appendChild(li);
+        }
+      });
+    } else {
+      changes.forEach(line => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        changelogList.appendChild(li);
+      });
+    }
+    downloadBtn.style.display = 'block';
+    if (isNativeApp) {
+      downloadBtn.textContent = '下载安装';
+    } else {
+      downloadBtn.textContent = '刷新更新';
+    }
+  } else {
+    changelogBox.style.display = 'none';
+    downloadBtn.style.display = 'none';
+  }
+
   document.getElementById('versionModal').classList.add('active');
+}
+
+async function downloadAndUpdate() {
+  // PWA: 刷新页面即可更新
+  if (!isNativeApp) {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage('clear-cache');
+    }
+    location.reload();
+    return;
+  }
+
+  // APP: 下载 APK 并安�?  const downloadBtn = document.getElementById('downloadBtn');
+  downloadBtn.textContent = '下载�?..';
+  downloadBtn.disabled = true;
+
+  try {
+    const apiUrl = API_BASE + '/api/version?current=' + APP_VERSION;
+    const resp = await fetch(apiUrl);
+    const data = await resp.json();
+    const apkUrl = API_BASE + (data.apk_url || '/api/download/apk');
+
+    const apkResp = await fetch(apkUrl);
+    const blob = await apkResp.blob();
+    const base64 = await blobToBase64(blob);
+
+    const Filesystem = Capacitor.Plugins.Filesystem;
+    const FileOpener = Capacitor.Plugins.FileOpener;
+
+    const fileName = 'qing-update.apk';
+    const writeResult = await Filesystem.writeFile({
+      path: fileName,
+      data: base64,
+      directory: 'CACHE',
+      recursive: true
+    });
+
+    await FileOpener.open({
+      filePath: writeResult.uri,
+      contentType: 'application/vnd.android.package-archive'
+    });
+  } catch (err) {
+    downloadBtn.textContent = '下载失败，重�?;
+    downloadBtn.disabled = false;
+  }
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result;
+      resolve(result.split(',')[1]);
+    };
+    reader.readAsDataURL(blob);
+  });
 }
 
 function closeVersionModal() {

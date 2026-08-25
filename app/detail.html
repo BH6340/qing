@@ -572,14 +572,14 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="icon-btn" onclick="location.href='index.html?from=detail'">
+    <div class="icon-btn" onclick="location.href='index.html'">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
     <div class="header-title">
       <div class="date">日 笺</div>
       <div class="weekday">DAILY NOTE</div>
     </div>
-    <div class="icon-btn" onclick="location.href='todo.html?date=' + currentDate + '&from=detail'">
+    <div class="icon-btn" onclick="sessionStorage.setItem('qing_detail_date', currentDate); location.href='todo.html?date=' + currentDate + '&from=detail'">
       <svg viewBox="0 0 24 24">
         <path d="M9 11l3 3L22 4"></path>
         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
@@ -812,12 +812,13 @@ let pickerMinute = 0;
 function init() {
   Store.load();
 
-  // 读取日期
+  // 读取日期：优先 URL 参数，其次 sessionStorage，最后今天
   const dateParam = Store.getQueryParam('date');
   if (dateParam) {
     currentDate = dateParam;
   } else {
-    currentDate = Store.dateKey(new Date());
+    const saved = sessionStorage.getItem('qing_detail_date');
+    currentDate = saved || Store.dateKey(new Date());
   }
 
   const [y, m, d] = currentDate.split('-');
@@ -838,6 +839,7 @@ function init() {
 }
 
 function goToTodo() {
+  sessionStorage.setItem('qing_detail_date', currentDate);
   location.href = `todo.html?date=${currentDate}&from=detail`;
 }
 
@@ -1357,7 +1359,7 @@ function confirmDatePicker() {
     return;
   }
   closeDatePicker();
-  location.href = `detail.html?date=${targetDate}`;
+  location.href = `detail.html?date=${targetDate}&from=index`;
 }
 
 function prevDay() {
@@ -1365,7 +1367,7 @@ function prevDay() {
   const date = new Date(y, m - 1, d);
   date.setDate(date.getDate() - 1);
   const prev = Store.dateKey(date);
-  location.href = `detail.html?date=${prev}`;
+  location.href = `detail.html?date=${prev}&from=index`;
 }
 
 function nextDay() {
@@ -1378,7 +1380,7 @@ function nextDay() {
     return;
   }
   const next = Store.dateKey(date);
-  location.href = `detail.html?date=${next}`;
+  location.href = `detail.html?date=${next}&from=index`;
 }
 
 function updateNavArrows() {

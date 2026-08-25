@@ -18,8 +18,8 @@
       if (from === 'index') {
         location.href = 'index.html';
       } else {
-        var url = from + '.html';
-        if (date) url += '?date=' + date;
+        var url = from + '.html?from=index';
+        if (date) url += '&date=' + date;
         location.href = url;
       }
       return;

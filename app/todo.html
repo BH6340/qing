@@ -747,7 +747,7 @@ function goBack() {
   const from = Store.getQueryParam('from');
   const date = Store.getQueryParam('date');
   if (from === 'detail' && date) {
-    location.href = `detail.html?date=${date}&from=todo`;
+    location.href = `detail.html?date=${date}&from=index`;
   } else {
     location.href = 'index.html';
   }

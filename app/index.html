@@ -552,7 +552,7 @@
   <!-- Header -->
   <div class="header">
     <div class="title">轻 · 日历</div>
-    <div class="icon-btn" onclick="location.href='settings.html?from=index'">
+    <div class="icon-btn" onclick="saveState(); location.href='settings.html?from=index'">
       <svg viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3"></circle>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -749,9 +749,27 @@ function init() {
   initPicker();
   initWeightPicker();
   initTimePicker();
+  // 恢复上次浏览状态
+  const saved = sessionStorage.getItem('qing_index_state');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      currentYear = s.year;
+      currentMonth = s.month;
+      selectedDate = s.date;
+    } catch(e) {}
+  }
   renderCalendar();
   updateBottomCard();
   initSwipe();
+}
+
+function saveState() {
+  sessionStorage.setItem('qing_index_state', JSON.stringify({
+    year: currentYear,
+    month: currentMonth,
+    date: selectedDate,
+  }));
 }
 
 // ===== Helper: short weekday =====
@@ -1046,11 +1064,13 @@ function onBottomCardClick() {
     openModal();
   } else {
     // 有记录 → 去日笺页
+    saveState();
     location.href = `detail.html?date=${currentYear}-${currentMonth}-${selectedDate}&from=index`;
   }
 }
 
 function goToTodo() {
+  saveState();
   location.href = `todo.html?date=${currentYear}-${currentMonth}-${selectedDate}&from=index`;
 }
 
@@ -1378,21 +1398,19 @@ document.addEventListener('keydown', (e) => {
 // Start
 init();
 
-// Hide splash screen after page is fully loaded
+// Hide native splash after page loads
 window.addEventListener('load', function() {
   setTimeout(function() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen) {
       window.Capacitor.Plugins.SplashScreen.hide();
     }
-  }, 500);
+  }, 1000);
 });
 
-// Register Service Worker
-if ('serviceWorker' in navigator) {
+// Register Service Worker (PWA only, not in Capacitor APP)
+if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNative)) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {
-      // SW registration failed, app still works normally
-    });
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
 </script>

@@ -1,16 +1,15 @@
 """
-轻 · 日历 - 后端服务
+�?· 日历 - 后端服务
 QING Weight Calendar Backend
 
 极简 Flask 后端，提供：
-- 版本检查接口
-- 静态文件托管（可选）
-
+- 版本检查接�?- APK 下载接口
+- 静态文件托管（PWA 备用�?
 运行: python app.py
 访问: http://localhost:5000
 """
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 import os
 
@@ -18,21 +17,22 @@ app = Flask(__name__, static_folder='../app', static_url_path='')
 CORS(app)
 
 # 应用版本
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 
-# 最新版本信息（实际项目中可以从配置文件或数据库读取）
-LATEST_VERSION = {
-    "version": "1.0.0",
-    "release_date": "2026-08-25",
-    "changelog": [
-        "体重日历记录，直观显示每日变化",
-        "每日待办清单，支持常用任务快速添加",
-        "日笺随笔，记录心情与每日感想",
-        "数据本地存储，支持导入导出",
-        "简约纸墨风格设计"
+# APK 目录
+APK_DIR = os.path.join(os.path.dirname(__file__), '..', 'apks')
+
+# 最新版本信�?LATEST_VERSION = {
+    "version": "1.0.1",
+    "release_date: "2026-08-25",
+    "changelog: [
+        "�ָ�PWA���߻��棨iOS���ã�
+֧��APP�ڼ����²����ذ�װ
+�������࿪����Դ"
     ],
-    "download_url": "",
-    "is_force_update": False
+    "apk_url": "/api/download/apk",
+    "is_force_update": False,
+    "min_version": "1.0.0"
 }
 
 
@@ -45,37 +45,44 @@ def index():
 @app.route('/api/version')
 def check_version():
     """
-    版本检查接口
-    GET /api/version?current=1.0.0
-    
-    返回:
-    {
-        "latest": "1.0.0",
-        "has_update": false,
-        "release_date": "2026-08-25",
-        "changelog": [...],
-        "download_url": "",
-        "is_force_update": false
-    }
+    版本检查接�?    GET /api/version?current=1.0.0
     """
-    current_version = app.config.get('CURRENT_VERSION', '')
-    
+    current_version = request.args.get('current', '')
+
     latest = LATEST_VERSION["version"]
     has_update = compare_versions(latest, current_version) > 0 if current_version else False
-    
+
     return jsonify({
         "latest": latest,
         "has_update": has_update,
         "release_date": LATEST_VERSION["release_date"],
         "changelog": LATEST_VERSION["changelog"],
-        "download_url": LATEST_VERSION["download_url"],
-        "is_force_update": LATEST_VERSION["is_force_update"]
+        "apk_url": LATEST_VERSION["apk_url"],
+        "is_force_update": LATEST_VERSION["is_force_update"],
+        "min_version": LATEST_VERSION["min_version"]
     })
+
+
+@app.route('/api/download/apk')
+def download_apk():
+    """APK 下载接口"""
+    apk_path = os.path.join(APK_DIR, 'app-release.apk')
+    if not os.path.exists(apk_path):
+        apk_path = os.path.join(APK_DIR, 'app-debug.apk')
+    if not os.path.exists(apk_path):
+        return jsonify({"error": "APK not found"}), 404
+
+    return send_from_directory(
+        os.path.dirname(apk_path),
+        os.path.basename(apk_path),
+        as_attachment=True,
+        download_name='qing-calendar.apk'
+    )
 
 
 @app.route('/api/health')
 def health():
-    """健康检查"""
+    """健康检�?""
     return jsonify({
         "status": "ok",
         "version": APP_VERSION,
@@ -84,10 +91,7 @@ def health():
 
 
 def compare_versions(v1, v2):
-    """
-    比较版本号
-    返回: 1 if v1 > v2, -1 if v1 < v2, 0 if equal
-    """
+    """比较版本�? 1 if v1 > v2, -1 if v1 < v2, 0 if equal"""
     try:
         parts1 = [int(x) for x in v1.split('.')]
         parts2 = [int(x) for x in v2.split('.')]
@@ -106,19 +110,19 @@ def compare_versions(v1, v2):
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("  轻 · 日历 后端服务")
+    print("  �?· 日历 后端服务")
     print(f"  版本: v{APP_VERSION}")
     print("=" * 50)
     print()
     print("  访问地址: http://localhost:5000")
-    print("  前端页面: http://localhost:5000/index.html")
-    print("  版本检查: http://localhost:5000/api/version")
-    print("  健康检查: http://localhost:5000/api/health")
+    print("  版本检�? http://localhost:5000/api/version")
+    print("  APK下载: http://localhost:5000/api/download/apk")
+    print("  健康检�? http://localhost:5000/api/health")
     print()
-    print("  按 Ctrl+C 停止服务")
+    print("  �?Ctrl+C 停止服务")
     print("=" * 50)
     print()
-    
+
     app.run(
         host='0.0.0.0',
         port=5000,

@@ -9,7 +9,7 @@
       "overlaysWebView": false
     },
     "SplashScreen": {
-      "launchShowDuration": 1500,
+      "launchShowDuration": 2000,
       "backgroundColor": "#f5f2ed",
       "showSpinner": false,
       "androidScaleType": "CENTER_CROP"
