@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">轻日历</string>
+    <string name="title_activity_main">轻日历</string>
+    <string name="package_name">com.bh6340.qing</string>
+    <string name="custom_url_scheme">com.bh6340.qing</string>
+</resources>

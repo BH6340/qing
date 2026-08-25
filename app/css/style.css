@@ -59,6 +59,8 @@ body::before {
   margin: 0 auto;
   min-height: 100vh;
   padding: 0 20px 100px;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   position: relative;
 }
 
@@ -309,7 +311,7 @@ body::before {
 /* FAB */
 .fab {
   position: fixed;
-  bottom: 32px;
+  bottom: calc(32px + env(safe-area-inset-bottom, 0px));
   right: 50%;
   transform: translateX(calc(210px - 28px));
   width: 56px;

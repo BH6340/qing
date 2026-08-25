@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f5f2ed">
 <title>设置 · 轻日历</title>
 <link rel="stylesheet" href="css/style.css">
@@ -263,12 +263,12 @@
   }
 </style>
 </head>
-<body>
+<body data-page="settings">
 
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="icon-btn" onclick="location.href='index.html'">
+    <div class="icon-btn" onclick="location.href='index.html?from=settings'">
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
     <div class="title">设 置</div>
@@ -634,5 +634,6 @@ document.getElementById('aboutModal').addEventListener('click', (e) => {
 init();
 </script>
 
+<script src="js/app-native.js"></script>
 </body>
 </html>

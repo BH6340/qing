@@ -1,0 +1,18 @@
+{
+  "appId": "com.bh6340.qing",
+  "appName": "轻日历",
+  "webDir": "app",
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#f5f2ed",
+      "overlaysWebView": false
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#f5f2ed",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP"
+    }
+  }
+}

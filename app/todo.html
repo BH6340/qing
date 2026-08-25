@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f5f2ed">
 <title>待办 · 轻日历</title>
 <link rel="stylesheet" href="css/style.css">
@@ -570,7 +570,7 @@
   .common-drawer-footer .add-btn:active:not(:disabled) { transform: scale(0.95); }
 </style>
 </head>
-<body>
+<body data-page="todo">
 
 <div class="app">
   <!-- Header -->
@@ -747,7 +747,7 @@ function goBack() {
   const from = Store.getQueryParam('from');
   const date = Store.getQueryParam('date');
   if (from === 'detail' && date) {
-    location.href = `detail.html?date=${date}`;
+    location.href = `detail.html?date=${date}&from=todo`;
   } else {
     location.href = 'index.html';
   }
@@ -1158,5 +1158,6 @@ function escapeHtml(text) {
 init();
 </script>
 
+<script src="js/app-native.js"></script>
 </body>
 </html>
