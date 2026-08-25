@@ -18,9 +18,11 @@
   },
   "homepage": "https://github.com/BH6340/qing#readme",
   "dependencies": {
+    "@capacitor-community/file-opener": "^8.0.1",
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/filesystem": "^8.1.3",
     "@capacitor/ios": "^8.5.0",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3"

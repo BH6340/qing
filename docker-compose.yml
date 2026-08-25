@@ -9,3 +9,10 @@ services:
       - ./server:/app/server
       - ./apks:/app/apks
     restart: unless-stopped
+    networks:
+      - default
+      - icube_icube_network
+
+networks:
+  icube_icube_network:
+    external: true
