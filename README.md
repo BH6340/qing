@@ -2,7 +2,9 @@
 
 > 极简体重记录与待办工具 · 纸墨质感设计
 
-一款简约不简单的体重日历应用，低调又高级。记录每日体重，管理每日待办，书写日笺随笔。数据全部本地存储，无需注册登录。
+一款简约的体重日历应用。记录每日体重，管理每日待办，书写日笺随笔。数据全部本地存储，无需注册登录。
+
+支持 Android 原生 APK、iOS PWA、浏览器 PWA 三端覆盖。
 
 ---
 
@@ -13,7 +15,7 @@
 - 左右滑动 / 点击年月切换月份，年月滚轮选择器
 - "今"字按钮一键回到今天
 - 直观显示与前一天的体重变化（红↑增重 / 绿↓减重 / — 持平）
-- 体重录入：滚轮选择 + 0.1 微调 + 记录时间修改
+- 体重录入：滚轮选择 + 记录时间修改
 - 录入初始值自动取前一天体重，加减更有仪式感
 - 底部卡片：体重 + 变化 + 待办概览，点击进入日笺
 - 毒舌 + 鼓励混搭的每日文案
@@ -49,9 +51,10 @@
 | 前端 | HTML + CSS + 原生 JS | 无框架依赖，加载快 |
 | 数据存储 | localStorage | 数据全部保存在本地 |
 | PWA | Service Worker + Manifest | iOS/浏览器 可安装到桌面，离线可用 |
-| 移动端 | Capacitor | Android 原生 APK，双端覆盖 |
+| 移动端 | Capacitor | Android 原生 APK，release 签名 |
 | 后端 | Python Flask | 极简后端，版本检查 + APK 分发 |
 | 部署 | Docker + Nginx | 容器化部署，Docker Nginx 反代 |
+| 签名 | JDK 21 + Gradle 8.14 | Release APK 签名构建 |
 | 设计风格 | 纸墨质感 · 焦糖色点缀 | 思源宋体 + 黑体 |
 
 ---
@@ -60,7 +63,7 @@
 
 ```
 qing/
-├── app/                     # 前端应用
+├── app/                     # 前端应用（Capacitor Web 资源）
 │   ├── index.html           # 日历页（首页）
 │   ├── todo.html            # 待办页
 │   ├── detail.html          # 日笺详情页
@@ -81,19 +84,20 @@ qing/
 │   ├── app/
 │   │   ├── build.gradle     # 构建配置（含 release 签名）
 │   │   └── src/main/res/    # 原生资源（图标、启动屏）
-│   └── qing-release.keystore # APK 签名密钥
+│   └── qing-release.keystore # APK 签名密钥（10000 天有效期）
 ├── apks/                    # APK 产物目录
 │   └── app-release.apk      # Release APK（10.4 MB）
-├── capacitor.config.json    # Capacitor 配置
-├── package.json             # Node 依赖
+├── capacitor.config.json    # Capacitor 配置（appId、SplashScreen、StatusBar）
+├── package.json             # Node 依赖（Capacitor 核心 + 插件）
 ├── Dockerfile               # Docker 镜像配置
-├── docker-compose.yml       # Docker Compose 配置（含网络连接）
+├── docker-compose.yml       # Docker Compose 配置（端口 5000 + 网络连接）
 ├── nginx-qing.conf          # Nginx 配置模板
 ├── build-apk.ps1            # 本地 APK 构建脚本
 ├── publish.ps1              # 本地一键发布脚本
 ├── deploy.sh                # 服务器部署脚本
 ├── build.bat                # Windows 纯静态打包脚本
 ├── build.sh                 # Linux/macOS 纯静态打包脚本
+├── .gitignore               # Git 忽略规则
 ├── DEPLOY.md                # 部署与构建指南
 └── README.md                # 项目说明
 ```
@@ -102,12 +106,12 @@ qing/
 
 ## 📲 下载
 
-| 平台 | 链接 |
-|------|------|
-| Android APK (HTTPS) | https://qing6340.duckdns.org/api/download/apk |
-| Android APK (HTTP) | http://103.100.211.146:5000/api/download/apk |
-| PWA 在线访问 (HTTPS) | https://qing6340.duckdns.org |
-| PWA 在线访问 (HTTP) | http://103.100.211.146:5000 |
+| 平台 | 协议 | 链接 |
+|------|------|------|
+| Android APK | HTTPS | https://qing6340.duckdns.org/api/download/apk |
+| Android APK | HTTP | http://103.100.211.146:5000/api/download/apk |
+| PWA 在线访问 | HTTPS | https://qing6340.duckdns.org |
+| PWA 在线访问 | HTTP | http://103.100.211.146:5000 |
 
 > Android 用户直接点击链接下载安装；iOS 用户用 Safari 打开 PWA 链接，添加到主屏幕。
 > HTTPS 域名走 Nginx 反代，HTTP 直连端口速度更快。
@@ -141,7 +145,7 @@ docker compose up -d
 
 | 平台 | 方案 | 安装方式 | 更新方式 |
 |------|------|---------|---------|
-| Android | Capacitor APK | 下载 APK 安装 | APP 内检查更新 → 下载安装 |
+| Android | Capacitor APK（10.4 MB） | 下载 APK 安装 | APP 内检查更新 → 下载安装 |
 | iOS | PWA | Safari 添加到主屏幕 | 设置 → 版本更新 → 刷新页面 |
 | 浏览器 | PWA | 安装到桌面 | 刷新页面自动更新 |
 
@@ -179,11 +183,18 @@ powershell -ExecutionPolicy Bypass -File e:\BH\Android\qing\publish.ps1 -Version
 **功能：** 同步 Web 资源到 Android 工程 → 构建 Release APK → 复制到 `apks/` 目录
 
 **流程：**
-1. `npx cap copy android` — 同步 `app/` 到 Android 工程
-2. `gradlew assembleRelease` — 构建 Release APK（含签名）
-3. 复制到 `apks/app-release.apk`
+1. 设置环境变量（JDK 21、Android SDK）
+2. `npx cap copy android` — 同步 `app/` 到 Android 工程
+3. `gradlew assembleRelease --offline` — 构建 Release APK（含签名）
+4. 复制到 `apks/app-release.apk`
 
 **产物：** `apks\app-release.apk`（10.4 MB）
+
+**环境依赖：**
+- JDK 21：`C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot`
+- Android SDK：`E:\software\Android\SDK`
+- Gradle 8.14.3（本地缓存）
+- Node.js 22+
 
 #### `publish.ps1`
 
@@ -196,7 +207,7 @@ powershell -ExecutionPolicy Bypass -File e:\BH\Android\qing\publish.ps1 -Version
 **流程（7 步）：**
 1. 更新 `settings.html` 的 `APP_VERSION` + `server/app.py` 的版本号/日期/changelog
 2. `npx cap copy android` — 同步代码
-3. `gradlew assembleRelease` — 构建 Release APK
+3. `gradlew assembleRelease --offline` — 构建 Release APK
 4. 复制 APK 到 `apks/` 目录
 5. `git add` + `commit` + `push`
 6. SSH 服务器 `git pull` + `docker compose restart`
@@ -234,16 +245,26 @@ sudo ./deploy.sh
 ├─ iOS / 浏览器（PWA）
 │   └─ 数据本地存储（localStorage + Service Worker）
 │
-云服务器（Docker）
+云服务器 103.100.211.146（Docker）
 ├─ icube_nginx（Docker Nginx，占 80/443）
 │   ├─ 旧项目（原有配置不变）
-│   └─ qing6340.duckdns.org → qing-calendar:5000
-├─ qing-calendar（Flask 容器）
-│   ├─ /api/version    → 版本检查
+│   └─ qing6340.duckdns.org:443 → qing-calendar:5000
+├─ qing-calendar（Flask 容器，端口 5000）
+│   ├─ /api/version      → 版本检查
 │   ├─ /api/download/apk → APK 下载
-│   └─ /                → PWA 静态文件
-└─ Let's Encrypt 证书（自动续期）
+│   ├─ /api/health       → 健康检查
+│   └─ /                  → PWA 静态文件
+├─ Let's Encrypt 证书（自动续期）
+└─ DuckDNS 域名（qing6340.duckdns.org）
 ```
+
+### 服务器端口
+
+| 端口 | 用途 | 访问方式 |
+|------|------|---------|
+| 443 | HTTPS Nginx 反代 | `https://qing6340.duckdns.org` |
+| 80 | HTTP Nginx（旧项目） | 旧项目使用 |
+| 5000 | Flask 直连 | `http://103.100.211.146:5000` |
 
 ### 服务器接口
 
@@ -287,6 +308,9 @@ sudo ./deploy.sh
 - 修复设置页编码问题
 - Release APK 签名（10.4 MB）
 - Capacitor 双端方案（Android APK + iOS PWA）
+- 开屏动画（1 秒）
+- 自定义返回键逻辑（子页面返回来源页，主页再按一次退出）
+- 服务器端口 5000 对外开放（IP 直连下载）
 
 ### v1.0.0 (2026-08-25)
 - 🎉 首次发布
