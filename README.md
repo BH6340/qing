@@ -100,6 +100,18 @@ qing/
 
 ---
 
+## 📲 下载
+
+| 平台 | 链接 |
+|------|------|
+| Android APK | https://qing6340.duckdns.org/api/download/apk |
+| PWA 在线访问 | https://qing6340.duckdns.org |
+
+> Android 用户直接点击链接下载安装；iOS 用户用 Safari 打开 PWA 链接，添加到主屏幕。
+> 如域名不可用，可临时用 IP 访问：http://103.100.211.146:5000
+
+---
+
 ## 🚀 快速开始
 
 ### 本地开发
