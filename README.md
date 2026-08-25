@@ -104,11 +104,13 @@ qing/
 
 | 平台 | 链接 |
 |------|------|
-| Android APK | https://qing6340.duckdns.org/api/download/apk |
-| PWA 在线访问 | https://qing6340.duckdns.org |
+| Android APK (HTTPS) | https://qing6340.duckdns.org/api/download/apk |
+| Android APK (HTTP) | http://103.100.211.146:5000/api/download/apk |
+| PWA 在线访问 (HTTPS) | https://qing6340.duckdns.org |
+| PWA 在线访问 (HTTP) | http://103.100.211.146:5000 |
 
 > Android 用户直接点击链接下载安装；iOS 用户用 Safari 打开 PWA 链接，添加到主屏幕。
-> 如域名不可用，可临时用 IP 访问：http://103.100.211.146:5000
+> HTTPS 域名走 Nginx 反代，HTTP 直连端口速度更快。
 
 ---
 
