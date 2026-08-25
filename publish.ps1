@@ -1,3 +1,6 @@
+﻿# QING Calendar Publish Script
+# Usage: powershell -ExecutionPolicy Bypass -File publish.ps1 -Version "1.0.2" -Changelog "Fix A`nAdd B"
+
 param(
   [Parameter(Mandatory=$true)]
   [string]$Version,
@@ -14,12 +17,12 @@ $remoteDir = "~/qing"
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor DarkYellow
-Write-Host "  轻 · 日历 发布工具 v$Version" -ForegroundColor Yellow
+Write-Host "  QING Calendar Publish v$Version" -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor DarkYellow
 Write-Host ""
 
-# ===== 1. 更新版本号 =====
-Write-Host "[1/7] 更新版本号..." -ForegroundColor Cyan
+# ===== 1. Update version =====
+Write-Host "[1/7] Update version..." -ForegroundColor Cyan
 
 $settingsPath = "$projectDir\app\settings.html"
 $content = Get-Content $settingsPath -Raw
@@ -41,23 +44,23 @@ Write-Host "  release_date -> $today" -ForegroundColor Green
 Write-Host "  changelog -> $($changeLines.Count) items" -ForegroundColor Green
 Write-Host ""
 
-# ===== 2. 同步 Capacitor =====
-Write-Host "[2/7] 同步 Capacitor..." -ForegroundColor Cyan
+# ===== 2. Sync Capacitor =====
+Write-Host "[2/7] Sync Capacitor..." -ForegroundColor Cyan
 Push-Location $projectDir
 npx cap copy android 2>&1 | Out-Null
 Write-Host "  Done" -ForegroundColor Green
 Write-Host ""
 
-# ===== 3. 构建 APK =====
-Write-Host "[3/7] 构建 APK..." -ForegroundColor Cyan
+# ===== 3. Build APK =====
+Write-Host "[3/7] Build APK..." -ForegroundColor Cyan
 $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot"
 $env:ANDROID_HOME = "E:\software\Android\SDK"
 $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
 $gradleExe = "C:\Users\Administrator\.gradle\wrapper\dists\gradle-8.14.3-all\cbf6zifq8xavouihta8md72jo\gradle-8.14.3\bin\gradle.bat"
 Push-Location "$projectDir\android"
-& $gradleExe assembleDebug --offline 2>&1 | Select-String "BUILD|FAIL|error:"
+& $gradleExe assembleRelease --offline 2>&1 | Select-String "BUILD|FAIL|error:"
 Pop-Location
-$apkPath = "$projectDir\android\app\build\outputs\apk\debug\app-debug.apk"
+$apkPath = "$projectDir\android\app\build\outputs\apk\release\app-release.apk"
 if (-not (Test-Path $apkPath)) {
   Write-Host "  APK build FAILED" -ForegroundColor Red
   exit 1
@@ -66,14 +69,14 @@ $apkSize = [math]::Round((Get-Item $apkPath).Length / 1MB, 1)
 Write-Host "  APK: $apkSize MB" -ForegroundColor Green
 Write-Host ""
 
-# ===== 4. 复制 APK 到 apks 目录 =====
-Write-Host "[4/7] 复制 APK..." -ForegroundColor Cyan
-Copy-Item $apkPath "$projectDir\apks\app-debug.apk" -Force
+# ===== 4. Copy APK =====
+Write-Host "[4/7] Copy APK..." -ForegroundColor Cyan
+Copy-Item $apkPath "$projectDir\apks\app-release.apk" -Force
 Write-Host "  Done" -ForegroundColor Green
 Write-Host ""
 
-# ===== 5. Git 提交推送 =====
-Write-Host "[5/7] Git 推送..." -ForegroundColor Cyan
+# ===== 5. Git push =====
+Write-Host "[5/7] Git push..." -ForegroundColor Cyan
 Push-Location $projectDir
 $ErrorActionPreference = "Continue"
 git add .gitignore app/ server/ apks/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
@@ -84,19 +87,19 @@ Pop-Location
 Write-Host "  Done" -ForegroundColor Green
 Write-Host ""
 
-# ===== 6. 服务器拉取 + 重启 =====
-Write-Host "[6/7] 服务器部署..." -ForegroundColor Cyan
+# ===== 6. Server deploy =====
+Write-Host "[6/7] Server deploy..." -ForegroundColor Cyan
 ssh $server "cd $remoteDir && git pull && sudo docker compose restart" 2>&1
 Write-Host ""
 
-# ===== 7. 完成 =====
-Write-Host "[7/7] 发布完成!" -ForegroundColor Green
+# ===== 7. Done =====
+Write-Host "[7/7] PUBLISHED!" -ForegroundColor Green
 Write-Host ""
-Write-Host "  版本: v$Version" -ForegroundColor Yellow
-Write-Host "  APK:  $apkSize MB" -ForegroundColor Yellow
-Write-Host "  日期:  $today" -ForegroundColor Yellow
+Write-Host "  Version: v$Version" -ForegroundColor Yellow
+Write-Host "  APK:     $apkSize MB" -ForegroundColor Yellow
+Write-Host "  Date:    $today" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  Android: APP 设置 -> 版本更新 -> 下载安装" -ForegroundColor White
-Write-Host "  iOS/PWA: 设置 -> 版本更新 -> 刷新更新" -ForegroundColor White
+Write-Host "  Android: Settings -> Check Update -> Download" -ForegroundColor White
+Write-Host "  iOS/PWA: Settings -> Check Update -> Refresh" -ForegroundColor White
 Write-Host "==========================================" -ForegroundColor DarkYellow
 Write-Host ""
