@@ -79,6 +79,14 @@
     stroke-width: 1.5;
     fill: none;
   }
+  .today-btn {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .today-btn:active {
+    background: var(--accent);
+    color: #fff;
+  }
 
   /* Weekday row */
   .weekday-row {
@@ -102,6 +110,7 @@
   .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 62px;
     gap: 4px;
     padding: 0 2px;
     position: relative;
@@ -566,6 +575,9 @@
       <div class="nav-btn" id="nextMonth" onclick="nextMonth()">
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </div>
+      <div class="nav-btn today-btn" id="todayBtn" onclick="goToday()" title="回到今天">
+        <span class="today-text">今</span>
+      </div>
     </div>
   </div>
 
@@ -872,6 +884,15 @@ function nextMonth() {
     currentYear++;
   }
   selectedDate = Math.min(selectedDate, new Date(currentYear, currentMonth, 0).getDate());
+  renderCalendar();
+  updateBottomCard();
+}
+
+function goToday() {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth() + 1;
+  selectedDate = now.getDate();
   renderCalendar();
   updateBottomCard();
 }
