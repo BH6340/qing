@@ -809,7 +809,7 @@ function createDayCell(day, isOtherMonth, weight) {
   const isSelected = day === selectedDate && !isOtherMonth;
 
   if (isOtherMonth) cell.classList.add('other-month');
-  if (isWeekend) cell.classList.add('weekend');
+  if (isWeekend && !isOtherMonth) cell.classList.add('weekend');
   if (isToday) cell.classList.add('today');
   if (isSelected) cell.classList.add('selected');
   if (weight !== null) cell.classList.add('has-weight');
