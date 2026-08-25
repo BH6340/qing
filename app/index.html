@@ -107,7 +107,7 @@
     position: relative;
   }
   .day-cell {
-    aspect-ratio: 1 / 1.15;
+    height: 62px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -121,6 +121,7 @@
     font-weight: 400;
     gap: 2px;
     padding: 4px 0;
+    overflow: hidden;
   }
   .day-cell:active { transform: scale(0.92); }
   .day-cell.other-month { color: var(--ink-faint); pointer-events: none; }
@@ -539,15 +540,6 @@
 <body>
 
 <div class="app">
-  <div class="status-bar">
-    <span id="statusTime">9:41</span>
-    <div class="right">
-      <span>●●●</span>
-      <span>📶</span>
-      <span>🔋</span>
-    </div>
-  </div>
-
   <!-- Header -->
   <div class="header">
     <div class="title">轻 · 日历</div>
@@ -742,21 +734,12 @@ let pickerMinute = 0;
 // ===== Initialize =====
 function init() {
   Store.load();
-  updateStatusTime();
-  setInterval(updateStatusTime, 30000);
   initPicker();
   initWeightPicker();
   initTimePicker();
   renderCalendar();
   updateBottomCard();
   initSwipe();
-}
-
-function updateStatusTime() {
-  const now = new Date();
-  const h = now.getHours();
-  const m = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('statusTime').textContent = `${h}:${m}`;
 }
 
 // ===== Helper: short weekday =====

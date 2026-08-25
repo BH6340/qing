@@ -570,15 +570,6 @@
 <body>
 
 <div class="app">
-  <div class="status-bar">
-    <span id="statusTime">9:41</span>
-    <div class="right">
-      <span>●●●</span>
-      <span>📶</span>
-      <span>🔋</span>
-    </div>
-  </div>
-
   <!-- Header -->
   <div class="header">
     <div class="icon-btn" onclick="location.href='index.html'">
@@ -820,8 +811,6 @@ let pickerMinute = 0;
 // ===== Init =====
 function init() {
   Store.load();
-  updateStatusTime();
-  setInterval(updateStatusTime, 30000);
 
   // 读取日期
   const dateParam = Store.getQueryParam('date');
@@ -846,13 +835,6 @@ function init() {
   initWeightPicker();
   initTimePicker();
   initDatePicker();
-}
-
-function updateStatusTime() {
-  const now = new Date();
-  const h = now.getHours();
-  const m = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('statusTime').textContent = `${h}:${m}`;
 }
 
 function goToTodo() {

@@ -573,15 +573,6 @@
 <body>
 
 <div class="app">
-  <div class="status-bar">
-    <span id="statusTime">9:41</span>
-    <div class="right">
-      <span>●●●</span>
-      <span>📶</span>
-      <span>🔋</span>
-    </div>
-  </div>
-
   <!-- Header -->
   <div class="header">
     <div class="icon-btn" onclick="goBack()">
@@ -700,8 +691,6 @@ let dragSrcIndex = null;
 // ===== Init =====
 function init() {
   Store.load();
-  updateStatusTime();
-  setInterval(updateStatusTime, 30000);
 
   // 读取日期参数
   const dateParam = Store.getQueryParam('date');
@@ -752,13 +741,6 @@ function init() {
       closeDrawer();
     }
   });
-}
-
-function updateStatusTime() {
-  const now = new Date();
-  const h = now.getHours();
-  const m = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('statusTime').textContent = `${h}:${m}`;
 }
 
 function goBack() {
