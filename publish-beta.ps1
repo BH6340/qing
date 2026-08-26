@@ -56,13 +56,20 @@ Write-Host "  release_date -> $today" -ForegroundColor Green
 Write-Host "  changelog -> $($changeLines.Count) items" -ForegroundColor Green
 Write-Host ""
 
-# ===== 2. Update frontend APP_VERSION (settings.html) =====
+# ===== 2. Update frontend APP_VERSION & channel meta =====
 Write-Host "[2/6] Update frontend version..." -ForegroundColor Cyan
-$settingsPath = "$projectDir\app\settings.html"
-$settingsContent = Get-Content $settingsPath -Raw -Encoding UTF8
-$settingsContent = $settingsContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
-Set-Content $settingsPath $settingsContent -NoNewline -Encoding UTF8
+$htmlFiles = @("settings.html", "index.html", "todo.html", "detail.html")
+foreach ($htmlFile in $htmlFiles) {
+    $htmlPath = "$projectDir\app\$htmlFile"
+    $htmlContent = Get-Content $htmlPath -Raw -Encoding UTF8
+    if ($htmlFile -eq "settings.html") {
+        $htmlContent = $htmlContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
+    }
+    $htmlContent = $htmlContent -replace 'name="app-channel" content="[^"]*"', 'name="app-channel" content="beta"'
+    Set-Content $htmlPath $htmlContent -NoNewline -Encoding UTF8
+}
 Write-Host "  APP_VERSION -> $Version" -ForegroundColor Green
+Write-Host "  app-channel -> beta" -ForegroundColor Green
 Write-Host ""
 
 # ===== 3. Sync Capacitor =====

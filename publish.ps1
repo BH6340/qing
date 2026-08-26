@@ -28,11 +28,17 @@ $today = Get-Date -Format "yyyy-MM-dd"
 $changeLines = $Changelog -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 $changeStr = ($changeLines | ForEach-Object { "        `"$_`"" }) -join ",`r`n"
 
-# Update frontend APP_VERSION
-$settingsPath = "$projectDir\app\settings.html"
-$settingsContent = Get-Content $settingsPath -Raw -Encoding UTF8
-$settingsContent = $settingsContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
-Set-Content $settingsPath $settingsContent -NoNewline -Encoding UTF8
+# Update frontend APP_VERSION & channel meta
+$htmlFiles = @("settings.html", "index.html", "todo.html", "detail.html")
+foreach ($htmlFile in $htmlFiles) {
+    $htmlPath = "$projectDir\app\$htmlFile"
+    $htmlContent = Get-Content $htmlPath -Raw -Encoding UTF8
+    if ($htmlFile -eq "settings.html") {
+        $htmlContent = $htmlContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
+    }
+    $htmlContent = $htmlContent -replace 'name="app-channel" content="[^"]*"', 'name="app-channel" content="formal"'
+    Set-Content $htmlPath $htmlContent -NoNewline -Encoding UTF8
+}
 
 # Update backend LATEST_VERSION block
 $appPath = "$projectDir\server\app.py"
