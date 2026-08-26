@@ -36,10 +36,18 @@
 - 无随笔时自动隐藏该模块
 - 支持左右切换日期 / 日期选择器跳转任意日期
 
+### ✅ 每日待办（v1.1.0-beta 更新）
+- 待完成任务点击文字可直接编辑
+- 长按三道杠拖拽调整任务顺序
+- 已完成任务：点击对勾取消完成、点击文字编辑、点时间修改完成时间、右侧 × 删除
+- 常用任务输入框美化，卡片式内嵌设计
+- 时间滚轮选择器与体重录入样式统一
+
 ### ⚙️ 设置
 - 数据导出 / 导入（JSON 格式）
 - 毒舌模式开关
 - 版本更新检查（Android APP 内下载安装，PWA 刷新更新）
+- Beta 测试计划：正式版与 Beta 版切换，数据独立隔离，切换时支持导出备份和导入
 - 清空所有数据
 
 ---
@@ -86,14 +94,17 @@ qing/
 │   │   └── src/main/res/    # 原生资源（图标、启动屏）
 │   └── qing-release.keystore # APK 签名密钥（10000 天有效期）
 ├── apks/                    # APK 产物目录
-│   └── app-release.apk      # Release APK（10.4 MB）
+│   ├── app-release.apk      # 正式版 Release APK
+│   ├── app-beta-1.1.0-beta.1.apk  # Beta 版 APK
+│   └── app-beta-latest.apk  # Beta 版最新 APK
 ├── capacitor.config.json    # Capacitor 配置（appId、SplashScreen、StatusBar）
 ├── package.json             # Node 依赖（Capacitor 核心 + 插件）
 ├── Dockerfile               # Docker 镜像配置
 ├── docker-compose.yml       # Docker Compose 配置（端口 5000 + 网络连接）
 ├── nginx-qing.conf          # Nginx 配置模板
 ├── build-apk.ps1            # 本地 APK 构建脚本
-├── publish.ps1              # 本地一键发布脚本
+├── publish.ps1              # 正式版一键发布脚本
+├── publish-beta.ps1         # Beta 版一键发布脚本
 ├── deploy.sh                # 服务器部署脚本
 ├── build.bat                # Windows 纯静态打包脚本
 ├── build.sh                 # Linux/macOS 纯静态打包脚本
@@ -108,8 +119,9 @@ qing/
 
 | 平台 | 协议 | 链接 |
 |------|------|------|
-| Android APK | HTTPS | https://qing6340.duckdns.org/api/download/apk |
-| Android APK | HTTP | http://103.100.211.146:5000/api/download/apk |
+| Android APK（正式版） | HTTPS | https://qing6340.duckdns.org/api/download/apk |
+| Android APK（正式版） | HTTP | http://103.100.211.146:5000/api/download/apk |
+| Android APK（Beta 版） | HTTP | http://103.100.211.146:5000/api/download/apk/beta |
 | PWA 在线访问 | HTTPS | https://qing6340.duckdns.org |
 | PWA 在线访问 | HTTP | http://103.100.211.146:5000 |
 
@@ -157,13 +169,21 @@ powershell -ExecutionPolicy Bypass -File e:\BH\Android\qing\build-apk.ps1
 
 产物：`apks\app-release.apk`（10.4 MB，已签名）
 
-### 一键发布
+### 一键发布（正式版）
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File e:\BH\Android\qing\publish.ps1 -Version "1.0.2" -Changelog "开屏时间调整为1秒`n修复设置页白屏"
 ```
 
-自动完成：改版本号 → 构建 APK → Git 推送 → 服务器拉取重启
+自动完成：改版本号 → 构建 APK → Git 推送 → 服务器拉取重启 → 健康检查
+
+### 一键发布（Beta 版）
+
+```powershell
+powershell -ExecutionPolicy Bypass -File e:\BH\Android\qing\publish-beta.ps1 -Version "1.1.0-beta.1" -Changelog "新增A功能`n优化B体验"
+```
+
+自动完成：改 Beta 版本号 → 构建 Beta APK → Git 推送 → 服务器拉取重启 → 健康检查（不影响正式版）
 
 ---
 
@@ -174,7 +194,8 @@ powershell -ExecutionPolicy Bypass -File e:\BH\Android\qing\publish.ps1 -Version
 | 脚本 | 作用 | 执行命令 |
 |------|------|---------|
 | `build-apk.ps1` | 构建 Release APK | `powershell -ExecutionPolicy Bypass -File build-apk.ps1` |
-| `publish.ps1` | 一键发布（构建+推送+部署） | `powershell -ExecutionPolicy Bypass -File publish.ps1 -Version "1.0.2" -Changelog "更新内容"` |
+| `publish.ps1` | 一键发布正式版（构建+推送+部署） | `powershell -ExecutionPolicy Bypass -File publish.ps1 -Version "1.0.2" -Changelog "更新内容"` |
+| `publish-beta.ps1` | 一键发布 Beta 版（构建+推送+部署） | `powershell -ExecutionPolicy Bypass -File publish-beta.ps1 -Version "1.1.0-beta.1" -Changelog "更新内容"` |
 | `build.bat` | 纯静态打包（无后端） | 双击 `build.bat` |
 | `build.sh` | 纯静态打包（Linux/macOS） | `./build.sh` |
 
@@ -250,10 +271,12 @@ sudo ./deploy.sh
 │   ├─ 旧项目（原有配置不变）
 │   └─ qing6340.duckdns.org:443 → qing-calendar:5000
 ├─ qing-calendar（Flask 容器，端口 5000）
-│   ├─ /api/version      → 版本检查
-│   ├─ /api/download/apk → APK 下载
-│   ├─ /api/health       → 健康检查
-│   └─ /                  → PWA 静态文件
+│   ├─ /api/version?channel=formal  → 正式版版本检查
+│   ├─ /api/version?channel=beta    → Beta 版版本检查
+│   ├─ /api/download/apk            → 正式版 APK 下载
+│   ├─ /api/download/apk/beta       → Beta 版 APK 下载
+│   ├─ /api/health                  → 健康检查
+│   └─ /                            → PWA 静态文件
 ├─ Let's Encrypt 证书（自动续期）
 └─ DuckDNS 域名（qing6340.duckdns.org）
 ```
@@ -270,8 +293,9 @@ sudo ./deploy.sh
 
 | 接口 | 方法 | 说明 |
 |------|------|------|
-| `/api/version` | GET | 返回最新版本信息（版本号、changelog、下载地址） |
-| `/api/download/apk` | GET | 下载 APK 文件 |
+| `/api/version` | GET | 返回最新版本信息（支持 `channel=formal/beta` 参数区分通道） |
+| `/api/download/apk` | GET | 下载正式版 APK |
+| `/api/download/apk/beta` | GET | 下载 Beta 版 APK |
 | `/api/health` | GET | 健康检查 |
 | `/` | GET | PWA 首页 |
 
@@ -284,7 +308,17 @@ sudo ./deploy.sh
 - 包含：体重记录、待办任务、常用任务、日笺随笔、心情记录
 - 可随时在设置页导出备份，或从备份文件导入
 
-> 清除应用数据会导致所有记录丢失，请定期导出备份。
+### Beta 通道数据隔离
+
+正式版和 Beta 版使用独立的 localStorage 命名空间，数据互不影响：
+
+| 通道 | 存储 Key | 说明 |
+|------|----------|------|
+| 正式版 | `qing_data_v1` | 默认通道，兼容现有数据 |
+| Beta 版 | `qing_data_v1_beta` | Beta 通道独立存储 |
+
+> 正式版之间升级（如 1.0.1 → 1.0.2）数据无缝迁移，无需重新录入。
+> 仅在「正式 ↔ Beta」切换时数据不互通，切换前 APP 会引导导出和导入。
 
 ---
 
@@ -300,6 +334,18 @@ sudo ./deploy.sh
 ---
 
 ## 📋 版本历史
+
+### v1.1.0-beta.1 (2026-08-26) [Beta]
+- 新增 Beta 测试计划，支持正式版与 Beta 版切换
+- 新增数据通道隔离，正式版与 Beta 版数据独立
+- 优化日历月份切换，增加滑入过渡动画
+- 调整"今"按钮位置到左侧
+- 优化待办任务，支持点击文字编辑
+- 修复待办拖拽排序，长按三道杠拖动
+- 改造已完成任务（取消完成/编辑/删除/改时间）
+- 优化常用任务输入框样式
+- 修复完成时间滚轮越界问题
+- 统一完成时间与体重记录的选择器样式
 
 ### v1.0.1 (2026-08-25)
 - 恢复 PWA 离线缓存（iOS 可用）
