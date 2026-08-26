@@ -14,27 +14,42 @@ CORS(app)
 APP_VERSION = "1.0.1"
 APK_DIR = os.path.join(os.path.dirname(__file__), '..', 'apks')
 
-# 正式版最新版�?LATEST_VERSION = {
+# === LATEST_VERSION_START ===
+LATEST_VERSION = {
     "version": "1.0.1",
     "release_date": "2026-08-25",
     "changelog": [
-        "恢复PWA离线缓存（iOS可用�?,
+        "恢复PWA离线缓存（iOS可用）",
         "支持APP内检查更新并下载安装",
-        "清理多余开屏资�?
+        "清理多余开屏资源"
     ],
     "apk_url": "/api/download/apk",
     "is_force_update": False,
     "min_version": "1.0.0"
 }
+# === LATEST_VERSION_END ===
 
-# Beta 版最新版本（发布 beta 时由脚本更新�?LATEST_BETA_VERSION = {
-    "version": None,
-    "release_date": None,
-    "changelog": [],
+# === LATEST_BETA_VERSION_START ===
+LATEST_BETA_VERSION = {
+    "version": "1.1.0-beta.1",
+    "release_date": "2026-08-26",
+    "changelog": [
+        "新增Beta测试计划，支持正式版与Beta版切换",
+        "新增数据通道隔离，正式版与Beta版数据独立",
+        "优化日历月份切换，增加滑入过渡动画",
+        "调整今按钮位置到左侧",
+        "优化待办任务，支持点击文字编辑",
+        "修复待办拖拽排序，长按三道杠拖动",
+        "改造已完成任务（取消完成/编辑/删除/改时间）",
+        "优化常用任务输入框样式",
+        "修复完成时间滚轮越界问题",
+        "统一完成时间与体重记录的选择器样式"
+    ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
     "min_version": "1.0.0"
 }
+# === LATEST_BETA_VERSION_END ===
 
 
 @app.route('/')
@@ -83,7 +98,7 @@ def download_apk():
 
 @app.route('/api/download/apk/beta')
 def download_beta_apk():
-    # �?apks 目录下最新的 beta apk
+    # Find the latest beta apk in apks directory
     beta_apks = []
     if os.path.exists(APK_DIR):
         for f in os.listdir(APK_DIR):
@@ -94,7 +109,7 @@ def download_beta_apk():
         beta_apks.sort(reverse=True)
         apk_path = beta_apks[0][1]
     else:
-        # fallback 到正式版
+        # fallback to release
         apk_path = os.path.join(APK_DIR, 'app-release.apk')
     if not os.path.exists(apk_path):
         return jsonify({"error": "Beta APK not found"}), 404

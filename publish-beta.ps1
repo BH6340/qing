@@ -1,5 +1,5 @@
-# QING Calendar Publish Script
-# Usage: powershell -ExecutionPolicy Bypass -File publish.ps1 -Version "1.0.2" -Changelog "Fix A`nAdd B"
+# QING Calendar Beta Publish Script
+# Usage: powershell -ExecutionPolicy Bypass -File publish-beta.ps1 -Version "1.1.0-beta.1" -Changelog "新增A功能`n优化B体验"
 
 param(
   [Parameter(Mandatory=$true)]
@@ -17,63 +17,63 @@ $remoteDir = "~/qing"
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor DarkYellow
-Write-Host "  QING Calendar Publish v$Version" -ForegroundColor Yellow
+Write-Host "  QING Calendar BETA Publish v$Version" -ForegroundColor Yellow
 Write-Host "==========================================" -ForegroundColor DarkYellow
 Write-Host ""
 
-# ===== 1. Update version =====
-Write-Host "[1/7] Update version..." -ForegroundColor Cyan
+# ===== 1. Update beta version in app.py =====
+Write-Host "[1/6] Update beta version info..." -ForegroundColor Cyan
 
+$appPath = "$projectDir\server\app.py"
+$content = Get-Content $appPath -Raw -Encoding UTF8
 $today = Get-Date -Format "yyyy-MM-dd"
+
+# Build changelog lines
 $changeLines = $Changelog -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 $changeStr = ($changeLines | ForEach-Object { "        `"$_`"" }) -join ",`r`n"
 
-# Update frontend APP_VERSION
-$settingsPath = "$projectDir\app\settings.html"
-$settingsContent = Get-Content $settingsPath -Raw -Encoding UTF8
-$settingsContent = $settingsContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
-Set-Content $settingsPath $settingsContent -NoNewline -Encoding UTF8
-
-# Update backend LATEST_VERSION block
-$appPath = "$projectDir\server\app.py"
-$appContent = Get-Content $appPath -Raw -Encoding UTF8
-
-# Update APP_VERSION
-$appContent = $appContent -replace 'APP_VERSION = "[^"]+"', "APP_VERSION = `"$Version`""
-
-# Update LATEST_VERSION block (between markers)
-$formalBlock = @"
-# === LATEST_VERSION_START ===
-LATEST_VERSION = {
+$betaBlock = @"
+# === LATEST_BETA_VERSION_START ===
+LATEST_BETA_VERSION = {
     "version": "$Version",
     "release_date": "$today",
     "changelog": [
 $changeStr
     ],
-    "apk_url": "/api/download/apk",
+    "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
     "min_version": "1.0.0"
 }
-# === LATEST_VERSION_END ===
+# === LATEST_BETA_VERSION_END ===
 "@
 
-$appContent = $appContent -replace '(?s)# === LATEST_VERSION_START ===.*?# === LATEST_VERSION_END ===', $formalBlock
-Set-Content $appPath $appContent -NoNewline -Encoding UTF8
+# Replace the block between markers
+$content = $content -replace '(?s)# === LATEST_BETA_VERSION_START ===.*?# === LATEST_BETA_VERSION_END ===', $betaBlock
 
-Write-Host "  APP_VERSION -> $Version" -ForegroundColor Green
+Set-Content $appPath $content -NoNewline -Encoding UTF8
+Write-Host "  beta version -> $Version" -ForegroundColor Green
 Write-Host "  release_date -> $today" -ForegroundColor Green
 Write-Host "  changelog -> $($changeLines.Count) items" -ForegroundColor Green
 Write-Host ""
 
-# ===== 2. Sync Capacitor =====
-Write-Host "[2/7] Sync Capacitor..." -ForegroundColor Cyan
+# ===== 2. Update frontend APP_VERSION (settings.html) =====
+Write-Host "[2/6] Update frontend version..." -ForegroundColor Cyan
+$settingsPath = "$projectDir\app\settings.html"
+$settingsContent = Get-Content $settingsPath -Raw -Encoding UTF8
+$settingsContent = $settingsContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
+Set-Content $settingsPath $settingsContent -NoNewline -Encoding UTF8
+Write-Host "  APP_VERSION -> $Version" -ForegroundColor Green
+Write-Host ""
+
+# ===== 3. Sync Capacitor =====
+Write-Host "[3/6] Sync Capacitor..." -ForegroundColor Cyan
 Push-Location $projectDir
 npx cap copy android 2>&1 | Out-Null
 Write-Host "  Done" -ForegroundColor Green
 Write-Host ""
 
-# ===== 3. Build APK =====
-Write-Host "[3/7] Build APK..." -ForegroundColor Cyan
+# ===== 4. Build APK =====
+Write-Host "[4/6] Build Beta APK..." -ForegroundColor Cyan
 $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot"
 $env:ANDROID_HOME = "E:\software\Android\SDK"
 $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
@@ -90,43 +90,40 @@ $apkSize = [math]::Round((Get-Item $apkPath).Length / 1MB, 1)
 Write-Host "  APK: $apkSize MB" -ForegroundColor Green
 Write-Host ""
 
-# ===== 4. Copy APK =====
-Write-Host "[4/7] Copy APK..." -ForegroundColor Cyan
-Copy-Item $apkPath "$projectDir\apks\app-release.apk" -Force
-Write-Host "  Done" -ForegroundColor Green
-Write-Host ""
+# ===== 5. Copy APK & deploy =====
+Write-Host "[5/6] Copy APK & deploy to server..." -ForegroundColor Cyan
+$betaApkName = "app-beta-$Version.apk"
+Copy-Item $apkPath "$projectDir\apks\$betaApkName" -Force
+Copy-Item $apkPath "$projectDir\apks\app-beta-latest.apk" -Force
+Write-Host "  -> apks\$betaApkName" -ForegroundColor Green
 
-# ===== 5. Git push =====
-Write-Host "[5/7] Git push..." -ForegroundColor Cyan
+# Git push
 Push-Location $projectDir
 $ErrorActionPreference = "Continue"
 git add .gitignore app/ server/ apks/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
-git commit -m "v${Version}: $($changeLines[0])" 2>&1 | Out-Null
+git commit -m "beta v${Version}: $($changeLines[0])" 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"
 Pop-Location
-Write-Host "  Done" -ForegroundColor Green
-Write-Host ""
 
-# ===== 6. Server deploy =====
-Write-Host "[6/7] Server deploy..." -ForegroundColor Cyan
+# Server deploy (pull & restart)
 $ErrorActionPreference = "Continue"
 ssh $server "cd $remoteDir && git pull && docker compose restart" 2>&1
 $ErrorActionPreference = "Stop"
 Write-Host ""
 
-# ===== 7. Health check =====
-Write-Host "[7/7] Health check..." -ForegroundColor Cyan
+# ===== 6. Health check =====
+Write-Host "[6/6] Health check..." -ForegroundColor Cyan
 $maxRetries = 6
 $retry = 0
 $healthy = $false
 while ($retry -lt $maxRetries -and -not $healthy) {
     Start-Sleep -Seconds 3
     try {
-        $resp = Invoke-RestMethod -Uri "https://qing6340.duckdns.org/api/health" -TimeoutSec 5
-        if ($resp.version -eq $Version) {
+        $resp = Invoke-RestMethod -Uri "https://qing6340.duckdns.org/api/version?channel=beta" -TimeoutSec 5
+        if ($resp.latest -eq $Version) {
             $healthy = $true
-            Write-Host "  OK - v$($resp.version)" -ForegroundColor Green
+            Write-Host "  OK - beta version $($resp.latest)" -ForegroundColor Green
         }
     } catch {
         $retry++
@@ -140,14 +137,19 @@ Write-Host ""
 
 # ===== Done =====
 Write-Host "==========================================" -ForegroundColor DarkYellow
-Write-Host "  PUBLISHED!" -ForegroundColor Green
+Write-Host "  BETA PUBLISHED!" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor DarkYellow
 Write-Host ""
-Write-Host "  Version: v$Version" -ForegroundColor Yellow
+Write-Host "  Version: v$Version (beta)" -ForegroundColor Yellow
 Write-Host "  APK:     $apkSize MB" -ForegroundColor Yellow
 Write-Host "  Date:    $today" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  Android: Settings -> Check Update -> Download" -ForegroundColor White
-Write-Host "  iOS/PWA: Settings -> Check Update -> Refresh" -ForegroundColor White
+Write-Host "  测试步骤：" -ForegroundColor White
+Write-Host "  1. 打开 APP -> 设置 -> Beta 测试计划 -> 加入 Beta" -ForegroundColor White
+Write-Host "  2. 设置 -> 版本更新 -> 检查更新（会收到 beta 更新）" -ForegroundColor White
+Write-Host "  3. 下载安装 beta 版" -ForegroundColor White
+Write-Host ""
+Write-Host "  接口验证：" -ForegroundColor White
+Write-Host "  https://qing6340.duckdns.org/api/version?channel=beta" -ForegroundColor White
 Write-Host "==========================================" -ForegroundColor DarkYellow
 Write-Host ""
