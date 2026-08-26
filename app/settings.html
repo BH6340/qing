@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f5f2ed">
-<title>设置 · 轻日历</title>
+<title>设置 · 轻日�?/title>
 <link rel="stylesheet" href="css/style.css">
 <style>
   .header {
@@ -100,6 +100,7 @@
   .setting-icon.green { background: #eef5f0; color: #5a9d7f; }
   .setting-icon.red { background: #fdf0f0; color: #d65a5a; }
   .setting-icon.purple { background: #f0eef5; color: #8a7bb0; }
+  .setting-icon.orange { background: #fdf3e7; color: #d4882a; }
   .setting-icon svg {
     width: 18px;
     height: 18px;
@@ -252,6 +253,107 @@
     left: 0;
     color: var(--accent);
   }
+
+  /* Beta Badge */
+  .beta-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #ff9a3c, #ff6b35);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    margin-right: 4px;
+    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+  }
+
+  /* Beta Banner */
+  .beta-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .beta-banner-warning {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+  }
+  .beta-banner-beta {
+    background: #f0eef5;
+    border: 1px solid #d8d3ea;
+  }
+  .beta-banner-success {
+    background: #f0f7f0;
+    border: 1px solid #c8e6c9;
+  }
+  .beta-banner-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .beta-banner-text {
+    flex: 1;
+  }
+  .beta-banner-text strong {
+    display: block;
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .beta-banner-text p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  /* Beta Notice List */
+  .beta-notice {
+    background: var(--paper);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .beta-notice-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .beta-notice ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .beta-notice li {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+    list-style: disc;
+  }
+
+  /* Beta Link (secondary action) */
+  .beta-link {
+    font-size: 13px;
+    color: var(--ink-mute);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .beta-link:hover {
+    color: var(--accent-deep);
+  }
+
+  /* Beta import hint */
+  .beta-import-hint {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    text-align: center;
+    padding: 8px 12px 16px;
+  }
 </style>
 </head>
 <body data-page="settings">
@@ -268,8 +370,8 @@
   </div>
 
   <div class="app-info">
-    <div class="app-logo">轻</div>
-    <div class="app-name">轻 · 日历</div>
+    <div class="app-logo">�?/div>
+    <div class="app-name">�?· 日历</div>
     <div class="app-version">QING · v1.0.1</div>
   </div>
 
@@ -303,7 +405,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">导入数据</div>
-          <div class="setting-desc">从 JSON 文件恢复数据</div>
+          <div class="setting-desc">�?JSON 文件恢复数据</div>
         </div>
         <div class="setting-arrow">
           <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -323,7 +425,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">毒舌模式</div>
-          <div class="setting-desc">让文案更扎心一些</div>
+          <div class="setting-desc">让文案更扎心一�?/div>
         </div>
         <div class="toggle" id="sarcasmToggle"></div>
       </div>
@@ -342,7 +444,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">版本更新</div>
-          <div class="setting-desc">检查是否有新版本</div>
+          <div class="setting-desc">检查是否有新版�?/div>
         </div>
         <span class="version-badge" id="versionBadge">v1.0.1</span>
       </div>
@@ -356,9 +458,27 @@
           </svg>
         </div>
         <div class="setting-content">
-          <div class="setting-label">关于轻日历</div>
-          <div class="setting-desc">极简体重与待办记录工具</div>
+          <div class="setting-label">关于轻日�?/div>
+          <div class="setting-desc">极简体重与待办记录工�?/div>
         </div>
+        <div class="setting-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </div>
+
+      <div class="setting-item" onclick="showBetaProgram()">
+        <div class="setting-icon orange">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
+          </svg>
+        </div>
+        <div class="setting-content">
+          <div class="setting-label">Beta 测试计划</div>
+          <div class="setting-desc" id="betaDesc">抢先体验新功�?/div>
+        </div>
+        <span class="beta-badge" id="betaBadge" style="display:none;">BETA</span>
         <div class="setting-arrow">
           <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
@@ -377,7 +497,7 @@
           </svg>
         </div>
         <div class="setting-content">
-          <div class="setting-label">清空所有数据</div>
+          <div class="setting-label">清空所有数�?/div>
           <div class="setting-desc">删除所有记录，不可恢复</div>
         </div>
         <div class="setting-arrow">
@@ -388,12 +508,13 @@
   </div>
 
   <div class="footer">
-    轻 · 日历 · QING<br>
-    Made with <span class="heart">♥</span> for a lighter you
+    �?· 日历 · QING<br>
+    Made with <span class="heart">�?/span> for a lighter you
   </div>
 </div>
 
 <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="handleImportFile(event)">
+<input type="file" id="betaImportFileInput" accept=".json" style="display:none;" onchange="handleBetaImportFile(event)">
 
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-sheet confirm-modal">
@@ -411,7 +532,7 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">版本更新</div>
-    <div class="modal-subtitle" id="versionSubtitle">当前已是最新版本</div>
+    <div class="modal-subtitle" id="versionSubtitle">当前已是最新版�?/div>
 
     <div class="version-detail">
       <div class="ver-num" id="verNum">v1.0.1</div>
@@ -435,20 +556,19 @@
 <div class="modal-overlay" id="aboutModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">关于轻日历</div>
+    <div class="modal-title">关于轻日�?/div>
 
     <div style="text-align:center; padding: 20px 0;">
-      <div style="width:64px;height:64px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent-light),var(--accent));border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;box-shadow:0 6px 20px rgba(196,149,106,0.3);">轻</div>
-      <div style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;letter-spacing:3px;">轻 · 日历</div>
+      <div style="width:64px;height:64px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent-light),var(--accent));border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;box-shadow:0 6px 20px rgba(196,149,106,0.3);">�?/div>
+      <div style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;letter-spacing:3px;">�?· 日历</div>
       <div style="font-size:12px;color:var(--ink-mute);margin-top:4px;letter-spacing:2px;">QING · v1.0.1</div>
     </div>
 
     <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;text-align:center;padding: 0 12px 24px;">
-      一款极简的体重记录与待办工具。<br>
-      纸墨质感设计，低调又高级。<br>
-      数据本地存储，隐私安全无忧。<br><br>
-      愿你每天都比昨天更轻盈一点。
-    </div>
+      一款极简的体重记录与待办工具�?br>
+      纸墨质感设计，低调又高级�?br>
+      数据本地存储，隐私安全无忧�?br><br>
+      愿你每天都比昨天更轻盈一点�?    </div>
 
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="closeAbout()">好的</button>
@@ -456,15 +576,117 @@
   </div>
 </div>
 
+<!-- Beta 测试计划弹窗 -->
+<div class="modal-overlay" id="betaModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="betaTitle">Beta 测试计划</div>
+
+    <div id="betaFormalView">
+      <!-- 正式版视角：加入 Beta -->
+      <div class="beta-banner beta-banner-warning">
+        <div class="beta-banner-icon">🧪</div>
+        <div class="beta-banner-text">
+          <strong>抢先体验新功�?/strong>
+          <p>Beta 版包含正在测试中的新功能，可能存在不稳定因素�?/p>
+        </div>
+      </div>
+
+      <div class="beta-notice">
+        <div class="beta-notice-title">⚠️ 切换前请注意</div>
+        <ul>
+          <li>Beta 版数据与正式版相互独�?/li>
+          <li>切换后将看不到当前的正式版数�?/li>
+          <li>建议先导出数据做备份，可再导入到 Beta</li>
+          <li>随时可以切回正式版，数据不受影响</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeBetaModal()">取消</button>
+        <button class="btn btn-primary" onclick="betaExportAndSwitch()">先导出数据，再切�?/button>
+      </div>
+      <div style="text-align:center; margin-top: 8px;">
+        <span class="beta-link" onclick="betaSkipExport()">直接切换，不备份</span>
+      </div>
+    </div>
+
+    <div id="betaBetaView" style="display:none;">
+      <!-- Beta 版视角：切回正式 -->
+      <div class="beta-banner beta-banner-beta">
+        <div class="beta-banner-icon">🏠</div>
+        <div class="beta-banner-text">
+          <strong>切回正式�?/strong>
+          <p>回到稳定版本，数据更安全�?/p>
+        </div>
+      </div>
+
+      <div class="beta-notice">
+        <div class="beta-notice-title">⚠️ 切换前请注意</div>
+        <ul>
+          <li>Beta 版数据不会自动同步到正式�?/li>
+          <li>切回后将看不�?Beta 版里的数�?/li>
+          <li>建议先导�?Beta 数据做备�?/li>
+          <li>随时可以重新加入 Beta</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeBetaModal()">取消</button>
+        <button class="btn btn-primary" onclick="betaExportAndSwitchFormal()">先导出数据，再切�?/button>
+      </div>
+      <div style="text-align:center; margin-top: 8px;">
+        <span class="beta-link" onclick="betaSkipExportFormal()">直接切回，不备份</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Beta 导入引导弹窗（切换后弹出�?-->
+<div class="modal-overlay" id="betaImportModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">切换成功</div>
+    <div class="beta-banner beta-banner-success">
+      <div class="beta-banner-icon">�?/div>
+      <div class="beta-banner-text">
+        <strong id="betaImportTitle">已切换到 Beta �?/strong>
+        <p id="betaImportDesc">要把之前通道的数据导入过来吗�?/p>
+      </div>
+    </div>
+    <div class="beta-import-hint">
+      选择刚才导出�?JSON 备份文件，即可恢复数据�?br>
+      如果选择跳过，将以空白数据开始�?    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="betaSkipImport()">跳过</button>
+      <button class="btn btn-primary" onclick="betaTriggerImport()">选择文件导入</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/storage.js"></script>
 <script>
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.1.0-beta.1';
 let confirmCallback = null;
 
 function init() {
   Store.load();
   const settings = Store.getSettings();
   updateToggle('sarcasmToggle', settings.sarcasm);
+  updateBetaBadge();
+}
+
+function updateBetaBadge() {
+  const channel = Store.getChannel();
+  const badge = document.getElementById('betaBadge');
+  const desc = document.getElementById('betaDesc');
+  if (channel === 'beta') {
+    badge.style.display = 'inline-block';
+    desc.textContent = '当前�?Beta 测试�?;
+  } else {
+    badge.style.display = 'none';
+    desc.textContent = '抢先体验新功�?;
+  }
 }
 
 function updateToggle(id, active) {
@@ -478,7 +700,7 @@ function toggleSarcasm() {
   const newValue = !settings.sarcasm;
   Store.updateSetting('sarcasm', newValue);
   updateToggle('sarcasmToggle', newValue);
-  Store.toast(newValue ? '毒舌模式已开启' : '毒舌模式已关闭');
+  Store.toast(newValue ? '毒舌模式已开�? : '毒舌模式已关�?);
 }
 
 function exportData() {
@@ -495,7 +717,7 @@ function exportData() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  Store.toast('数据已导出');
+  Store.toast('数据已导�?);
 }
 
 function importData() {
@@ -513,7 +735,7 @@ function handleImportFile(event) {
         Store.toast('数据导入成功');
         setTimeout(() => location.reload(), 1000);
       } else {
-        Store.toast('导入失败：文件格式错误');
+        Store.toast('导入失败：文件格式错�?);
       }
     });
   };
@@ -522,9 +744,9 @@ function handleImportFile(event) {
 }
 
 function confirmReset() {
-  showConfirm('清空所有数据', '此操作将删除所有体重记录、待办任务和日笺数据，且不可恢复。确定要继续吗？', () => {
+  showConfirm('清空所有数�?, '此操作将删除所有体重记录、待办任务和日笺数据，且不可恢复。确定要继续吗？', () => {
     Store.resetAll();
-    Store.toast('数据已清空');
+    Store.toast('数据已清�?);
     setTimeout(() => location.reload(), 1000);
   });
 }
@@ -554,7 +776,8 @@ function checkUpdate() {
   const badge = document.getElementById('versionBadge');
   badge.textContent = '检查中...';
 
-  fetch(API_BASE + '/api/version?current=' + APP_VERSION)
+  const channel = Store.getChannel();
+  fetch(API_BASE + '/api/version?current=' + APP_VERSION + '&channel=' + channel)
     .then(r => r.json())
     .then(data => {
       badge.textContent = 'v' + APP_VERSION;
@@ -567,7 +790,7 @@ function checkUpdate() {
     })
     .catch(() => {
       badge.textContent = 'v' + APP_VERSION;
-      document.getElementById('versionSubtitle').textContent = '检查失败，请稍后重试';
+      document.getElementById('versionSubtitle').textContent = '检查失败，请稍后重�?;
       document.getElementById('verNum').textContent = 'v' + APP_VERSION;
       document.getElementById('changelogBox').style.display = 'none';
       document.getElementById('downloadBtn').style.display = 'none';
@@ -576,7 +799,7 @@ function checkUpdate() {
 }
 
 function openVersionModal(hasUpdate, data) {
-  document.getElementById('versionSubtitle').textContent = hasUpdate ? '有新版本可用' : '当前已是最新版本';
+  document.getElementById('versionSubtitle').textContent = hasUpdate ? '有新版本可用' : '当前已是最新版�?;
   document.getElementById('verNum').textContent = 'v' + APP_VERSION;
 
   const changelogBox = document.getElementById('changelogBox');
@@ -626,11 +849,12 @@ async function downloadAndUpdate() {
   }
 
   const downloadBtn = document.getElementById('downloadBtn');
-  downloadBtn.textContent = '下载中...';
+  downloadBtn.textContent = '下载�?..';
   downloadBtn.disabled = true;
 
   try {
-    const apiUrl = API_BASE + '/api/version?current=' + APP_VERSION;
+    const channel = Store.getChannel();
+    const apiUrl = API_BASE + '/api/version?current=' + APP_VERSION + '&channel=' + channel;
     const resp = await fetch(apiUrl);
     const data = await resp.json();
     const apkUrl = API_BASE + (data.apk_url || '/api/download/apk');
@@ -655,7 +879,7 @@ async function downloadAndUpdate() {
       contentType: 'application/vnd.android.package-archive'
     });
   } catch (err) {
-    downloadBtn.textContent = '下载失败，重试';
+    downloadBtn.textContent = '下载失败，重�?;
     downloadBtn.disabled = false;
   }
 }
@@ -683,6 +907,133 @@ function closeAbout() {
   document.getElementById('aboutModal').classList.remove('active');
 }
 
+// ===== Beta 测试计划 =====
+let betaSwitchTarget = null; // 'beta' or 'formal'
+let betaDidExport = false;  // 切换前是否已导出
+
+function showBetaProgram() {
+  const channel = Store.getChannel();
+  if (channel === 'beta') {
+    // Beta 视角：切回正�?    document.getElementById('betaTitle').textContent = '切回正式�?;
+    document.getElementById('betaFormalView').style.display = 'none';
+    document.getElementById('betaBetaView').style.display = 'block';
+  } else {
+    // 正式视角：加�?Beta
+    document.getElementById('betaTitle').textContent = 'Beta 测试计划';
+    document.getElementById('betaFormalView').style.display = 'block';
+    document.getElementById('betaBetaView').style.display = 'none';
+  }
+  document.getElementById('betaModal').classList.add('active');
+}
+
+function closeBetaModal() {
+  document.getElementById('betaModal').classList.remove('active');
+}
+
+// 导出当前通道数据，下�?JSON 文件
+function betaExportCurrent(channel, callback) {
+  const data = Store.exportChannelData(channel);
+  if (!data) {
+    // 没有数据也继�?    if (callback) callback(true);
+    return;
+  }
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const suffix = channel === 'beta' ? '-beta' : '';
+  const filename = `qing-backup${suffix}-${dateStr}.json`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  Store.toast('数据已导�?);
+  setTimeout(() => {
+    if (callback) callback(true);
+  }, 800);
+}
+
+// 正式 �?Beta：先导出再切�?function betaExportAndSwitch() {
+  betaExportCurrent('formal', () => {
+    betaDidExport = true;
+    betaSwitchTarget = 'beta';
+    betaConfirmSwitch();
+  });
+}
+
+// 正式 �?Beta：直接切换不备份
+function betaSkipExport() {
+  showConfirm('确定不备份就切换�?, '正式版数据会保留，但 Beta 版里看不到。确定直接切换吗�?, () => {
+    betaDidExport = false;
+    betaSwitchTarget = 'beta';
+    betaConfirmSwitch();
+  });
+}
+
+// Beta �?正式：先导出再切�?function betaExportAndSwitchFormal() {
+  betaExportCurrent('beta', () => {
+    betaDidExport = true;
+    betaSwitchTarget = 'formal';
+    betaConfirmSwitch();
+  });
+}
+
+// Beta �?正式：直接切回不备份
+function betaSkipExportFormal() {
+  showConfirm('确定不备份就切回�?, 'Beta 版数据会保留，但正式版里看不到。确定直接切回吗�?, () => {
+    betaDidExport = false;
+    betaSwitchTarget = 'formal';
+    betaConfirmSwitch();
+  });
+}
+
+// 执行切换
+function betaConfirmSwitch() {
+  closeBetaModal();
+  Store.switchChannel(betaSwitchTarget);
+  updateBetaBadge();
+
+  // 弹出导入引导
+  const title = betaSwitchTarget === 'beta' ? '已切换到 Beta �? : '已切回正式版';
+  const desc = betaDidExport
+    ? '刚才已导出备份，要把数据导入到当前通道吗？'
+    : '要从另一个通道导入数据吗？';
+  document.getElementById('betaImportTitle').textContent = title;
+  document.getElementById('betaImportDesc').textContent = desc;
+  document.getElementById('betaImportModal').classList.add('active');
+}
+
+function betaSkipImport() {
+  document.getElementById('betaImportModal').classList.remove('active');
+  Store.toast(betaSwitchTarget === 'beta' ? '欢迎加入 Beta 测试' : '已切回正式版');
+  setTimeout(() => location.reload(), 800);
+}
+
+function betaTriggerImport() {
+  document.getElementById('betaImportFileInput').click();
+}
+
+function handleBetaImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const success = Store.importData(e.target.result);
+    document.getElementById('betaImportModal').classList.remove('active');
+    if (success) {
+      Store.toast('数据导入成功');
+    } else {
+      Store.toast('导入失败：文件格式错�?);
+    }
+    setTimeout(() => location.reload(), 1000);
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 document.getElementById('confirmModal').addEventListener('click', (e) => {
   if (e.target.id === 'confirmModal') closeConfirm();
 });
@@ -691,6 +1042,12 @@ document.getElementById('versionModal').addEventListener('click', (e) => {
 });
 document.getElementById('aboutModal').addEventListener('click', (e) => {
   if (e.target.id === 'aboutModal') closeAbout();
+});
+document.getElementById('betaModal').addEventListener('click', (e) => {
+  if (e.target.id === 'betaModal') closeBetaModal();
+});
+document.getElementById('betaImportModal').addEventListener('click', (e) => {
+  if (e.target.id === 'betaImportModal') betaSkipImport();
 });
 
 init();

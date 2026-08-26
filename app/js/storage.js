@@ -4,7 +4,27 @@
    ======================================== */
 
 const Store = (function() {
-  const STORAGE_KEY = 'qing_data_v1';
+  const BASE_STORAGE_KEY = 'qing_data_v1';
+  const CHANNEL_KEY = 'qing_channel'; // 存在独立的 key 里，不受通道数据影响
+
+  // 获取当前通道：formal / beta
+  function _getChannel() {
+    return localStorage.getItem(CHANNEL_KEY) || 'formal';
+  }
+
+  // 设置通道（不触发数据迁移，仅切换 key）
+  function _setChannel(channel) {
+    localStorage.setItem(CHANNEL_KEY, channel);
+    cache = null; // 清空缓存，下次 load 时从新 key 加载
+  }
+
+  // 获取当前通道的存储 key
+  function getStorageKey() {
+    const channel = _getChannel();
+    return channel === 'beta' ? BASE_STORAGE_KEY + '_beta' : BASE_STORAGE_KEY;
+  }
+
+  let STORAGE_KEY = getStorageKey();
 
   // 默认数据结构
   const defaultData = {
@@ -305,10 +325,39 @@ const Store = (function() {
     save();
   }
 
-  // 清除缓存并重新从 localStorage 加载（用于 bfcache 恢复）
+  // 清除缓存并重新从 localStorage 加载（用于 bfcache 恢复 / 通道切换）
   function reload() {
+    STORAGE_KEY = getStorageKey();
     cache = null;
     return load();
+  }
+
+  // ===== 通道管理 =====
+  function getChannel() {
+    // 这里重新读一次，确保拿到最新
+    return localStorage.getItem(CHANNEL_KEY) || 'formal';
+  }
+
+  function switchChannel(channel) {
+    _setChannel(channel);
+    STORAGE_KEY = getStorageKey();
+    cache = null;
+    load();
+  }
+
+  // 导出指定通道的数据（不切换当前通道）
+  function exportChannelData(channel) {
+    const key = channel === 'beta' ? BASE_STORAGE_KEY + '_beta' : BASE_STORAGE_KEY;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      const data = JSON.parse(raw);
+      data.exportedAt = new Date().toISOString();
+      data.exportedFromChannel = channel;
+      return JSON.stringify(data, null, 2);
+    } catch (e) {
+      return null;
+    }
   }
 
   // ===== 工具函数 =====
@@ -368,6 +417,8 @@ const Store = (function() {
   return {
     // 基础
     load, save, reload, resetAll, dateKey,
+    // 通道
+    getChannel, switchChannel, exportChannelData,
     // 体重
     getWeight, setWeight, deleteWeight, getPrevWeight, getMonthWeights,
     // 任务

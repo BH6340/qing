@@ -308,6 +308,53 @@ body::before {
   font-weight: 500;
 }
 
+/* Picker section (modal compact) */
+.picker-section {
+  margin-bottom: 16px;
+}
+.picker-section-title {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-mute);
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.picker-section .picker-wrap {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.picker-col-decimal,
+.picker-col-colon {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent-deep);
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* Compact modal picker */
+.modal-picker .picker-col {
+  height: 60px;
+  max-width: 120px;
+  flex: 0 0 120px;
+}
+.modal-picker .picker-col::before,
+.modal-picker .picker-col::after {
+  height: 12px;
+}
+.modal-picker .picker-item {
+  height: 36px;
+  font-size: 14px;
+}
+.modal-picker .picker-item.selected {
+  font-size: 18px;
+}
+
 /* FAB */
 .fab {
   position: fixed;

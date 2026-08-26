@@ -115,6 +115,20 @@
     padding: 0 2px;
     position: relative;
   }
+  .calendar-grid.slide-left {
+    animation: slideInRight 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .calendar-grid.slide-right {
+    animation: slideInLeft 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { transform: translateX(-30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
   .day-cell {
     height: 62px;
     display: flex;
@@ -569,14 +583,14 @@
       </svg>
     </div>
     <div class="month-nav">
+      <div class="nav-btn today-btn" id="todayBtn" onclick="goToday()" title="回到今天">
+        <span class="today-text">今</span>
+      </div>
       <div class="nav-btn" id="prevMonth" onclick="prevMonth()">
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </div>
       <div class="nav-btn" id="nextMonth" onclick="nextMonth()">
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-      <div class="nav-btn today-btn" id="todayBtn" onclick="goToday()" title="回到今天">
-        <span class="today-text">今</span>
       </div>
     </div>
   </div>
@@ -891,6 +905,7 @@ function prevMonth() {
     currentYear--;
   }
   selectedDate = Math.min(selectedDate, new Date(currentYear, currentMonth, 0).getDate());
+  animateCalendar('slide-right');
   renderCalendar();
   updateBottomCard();
 }
@@ -902,15 +917,36 @@ function nextMonth() {
     currentYear++;
   }
   selectedDate = Math.min(selectedDate, new Date(currentYear, currentMonth, 0).getDate());
+  animateCalendar('slide-left');
   renderCalendar();
   updateBottomCard();
 }
 
+function animateCalendar(direction) {
+  const grid = document.getElementById('calendarGrid');
+  grid.classList.remove('slide-left', 'slide-right');
+  void grid.offsetWidth; // trigger reflow
+  grid.classList.add(direction);
+}
+
 function goToday() {
   const now = new Date();
-  currentYear = now.getFullYear();
-  currentMonth = now.getMonth() + 1;
-  selectedDate = now.getDate();
+  const newYear = now.getFullYear();
+  const newMonth = now.getMonth() + 1;
+  const newDate = now.getDate();
+  if (newYear === currentYear && newMonth === currentMonth) {
+    // 同月，只更新选中
+    selectedDate = newDate;
+    renderCalendar();
+    updateBottomCard();
+    return;
+  }
+  // 不同月，加动画
+  const direction = newMonth > currentMonth || (newMonth === 1 && currentMonth === 12) ? 'slide-left' : 'slide-right';
+  currentYear = newYear;
+  currentMonth = newMonth;
+  selectedDate = newDate;
+  animateCalendar(direction);
   renderCalendar();
   updateBottomCard();
 }
@@ -1356,9 +1392,11 @@ function closePicker() {
 }
 
 function confirmPicker() {
+  const direction = pickerMonth > currentMonth || (pickerMonth === 1 && currentMonth === 12) ? 'slide-left' : 'slide-right';
   currentYear = pickerYear;
   currentMonth = pickerMonth;
   selectedDate = Math.min(selectedDate, new Date(currentYear, currentMonth, 0).getDate());
+  animateCalendar(direction);
   renderCalendar();
   updateBottomCard();
   closePicker();
