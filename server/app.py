@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 QING Weight Calendar Backend
 Flask backend: version check + APK download + static hosting
@@ -31,19 +31,12 @@ LATEST_VERSION = {
 
 # === LATEST_BETA_VERSION_START ===
 LATEST_BETA_VERSION = {
-    "version": "1.1.0-beta.1",
-    "release_date": "2026-08-26",
+    "version": "1.1.0-beta.2",
+    "release_date": "2026-08-27",
     "changelog": [
-        "新增Beta测试计划，支持正式版与Beta版切换",
-        "新增数据通道隔离，正式版与Beta版数据独立",
-        "优化日历月份切换，增加滑入过渡动画",
-        "调整今按钮位置到左侧",
-        "优化待办任务，支持点击文字编辑",
-        "修复待办拖拽排序，长按三道杠拖动",
-        "改造已完成任务（取消完成/编辑/删除/改时间）",
-        "优化常用任务输入框样式",
-        "修复完成时间滚轮越界问题",
-        "统一完成时间与体重记录的选择器样式"
+        "修复导出数据问题（Filesystem插件注册+外部存储目录）",
+        "优化Beta切换为下载APK方式",
+        "删除通道切换相关代码"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
