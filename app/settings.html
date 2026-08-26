@@ -446,7 +446,6 @@
 </div>
 
 <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="handleImportFile(event)">
-<input type="file" id="betaFileInput" accept=".json" style="display:none;" onchange="handleBetaImportFile(event)">
 
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-sheet confirm-modal">
@@ -493,29 +492,15 @@
       <b>注意事项：</b><br>
       · Beta 版可能有不稳定因素<br>
       · 数据与正式版相互独立<br>
-      · 切换后看不到现有正式版数据<br>
+      · 安装后看不到现有数据<br>
       · 建议先导出数据做备份
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeBetaSwitch()">取消</button>
-      <button class="btn btn-primary" id="betaSwitchExportBtn" onclick="exportThenSwitch()">先导出数据，再切换</button>
+      <button class="btn btn-primary" id="betaSwitchExportBtn" onclick="exportThenDownload()">先导出数据，再下载</button>
     </div>
     <div style="text-align:center; margin-top:12px;">
-      <a href="javascript:void(0)" id="betaSwitchDirectBtn" onclick="directSwitch()" style="font-size:12px; color:var(--ink-mute); text-decoration:underline;">直接切换（数据保留在原通道）</a>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="betaImportModal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="betaImportTitle">导入数据</div>
-    <div class="import-tip" id="betaImportTip">
-      切换成功！要把刚才导出的数据导入到新通道吗？
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeBetaImport()">不了，用空数据开始</button>
-      <button class="btn btn-primary" onclick="document.getElementById('betaFileInput').click()">选择文件导入</button>
+      <a href="javascript:void(0)" id="betaSwitchDirectBtn" onclick="downloadOtherAPK()" style="font-size:12px; color:var(--ink-mute); text-decoration:underline;">直接下载（数据保留在当前版本）</a>
     </div>
   </div>
 </div>
@@ -548,7 +533,17 @@
 <script>
 const APP_VERSION = '1.1.0-beta.1';
 let confirmCallback = null;
-let betaSwitchTarget = 'beta';
+
+// ===== Capacitor 插件注册（纯HTML环境必须手动注册）=====
+const isNativeApp = window.Capacitor && window.Capacitor.isNative;
+let FilesystemPlugin = null;
+let FileOpenerPlugin = null;
+if (isNativeApp) {
+  FilesystemPlugin = Capacitor.registerPlugin('Filesystem');
+  FileOpenerPlugin = Capacitor.registerPlugin('FileOpener');
+}
+
+const API_BASE = 'https://qing6340.duckdns.org';
 
 function init() {
   Store.load();
@@ -584,6 +579,8 @@ function toggleSarcasm() {
   Store.toast(newValue ? '毒舌模式已开启' : '毒舌模式已关闭');
 }
 
+// ===== 数据导出（Filesystem 插件）=====
+
 function exportData() {
   const data = Store.exportData();
   const now = new Date();
@@ -593,22 +590,19 @@ function exportData() {
 }
 
 async function downloadJSON(jsonStr, filename, successMsg) {
-  // 原生 APP：用 Capacitor Filesystem 写文件
-  if (window.Capacitor && Capacitor.Plugins.Filesystem) {
+  if (FilesystemPlugin) {
     try {
-      const { Filesystem, Directory, Encoding } = Capacitor.Plugins.Filesystem;
-      const result = await Filesystem.writeFile({
+      const result = await FilesystemPlugin.writeFile({
         path: filename,
         data: jsonStr,
-        directory: Directory.Documents,
-        encoding: Encoding.UTF8,
+        directory: 'DOCUMENTS',
+        encoding: 'utf8'
       });
       Store.toast(successMsg || '数据已导出');
-      // 尝试用 FileOpener 打开文件（让用户可以分享/保存）
-      if (Capacitor.Plugins.FileOpener) {
+      if (FileOpenerPlugin) {
         try {
-          await Capacitor.Plugins.FileOpener.open({ filePath: result.uri, contentType: 'application/json' });
-        } catch(e) { /* 用户取消或插件不可用，文件已在文档目录 */ }
+          await FileOpenerPlugin.open({ filePath: result.uri, contentType: 'application/json' });
+        } catch(e) { }
       }
     } catch(e) {
       Store.toast('导出失败：' + (e.message || e));
@@ -676,22 +670,20 @@ function doConfirm() {
   closeConfirm();
 }
 
-// ===== Beta 通道切换 =====
+// ===== Beta 测试计划（下载另一个 APK）=====
 
 function betaSwitchChannel() {
   const channel = Store.getChannel();
   if (channel === 'beta') {
-    betaSwitchTarget = 'formal';
     document.getElementById('betaSwitchTitle').textContent = '切回正式版';
-    document.getElementById('betaSwitchWarn').innerHTML = '<b>注意事项：</b><br>· 回到稳定版本，数据更安全<br>· Beta 版里的数据不会自动同步<br>· 切回后看不到 Beta 数据<br>· 建议先导出 Beta 数据';
-    document.getElementById('betaSwitchExportBtn').textContent = '先导出数据，再切回';
-    document.getElementById('betaSwitchDirectBtn').textContent = '直接切回（数据保留在 Beta）';
+    document.getElementById('betaSwitchWarn').innerHTML = '<b>注意事项：</b><br>· 回到稳定版本，数据更安全<br>· Beta 版里的数据不会自动同步<br>· 安装正式版后看不到 Beta 数据<br>· 建议先导出 Beta 数据';
+    document.getElementById('betaSwitchExportBtn').textContent = '先导出数据，再下载';
+    document.getElementById('betaSwitchDirectBtn').textContent = '直接下载正式版（数据保留在 Beta）';
   } else {
-    betaSwitchTarget = 'beta';
     document.getElementById('betaSwitchTitle').textContent = '加入 Beta 测试';
-    document.getElementById('betaSwitchWarn').innerHTML = '<b>注意事项：</b><br>· Beta 版可能有不稳定因素<br>· 数据与正式版相互独立<br>· 切换后看不到现有正式版数据<br>· 建议先导出数据做备份';
-    document.getElementById('betaSwitchExportBtn').textContent = '先导出数据，再切换';
-    document.getElementById('betaSwitchDirectBtn').textContent = '直接切换（数据保留在正式版）';
+    document.getElementById('betaSwitchWarn').innerHTML = '<b>注意事项：</b><br>· Beta 版可能有不稳定因素<br>· 数据与正式版相互独立<br>· 安装后看不到现有正式版数据<br>· 建议先导出数据做备份';
+    document.getElementById('betaSwitchExportBtn').textContent = '先导出数据，再下载';
+    document.getElementById('betaSwitchDirectBtn').textContent = '直接下载 Beta 版（数据保留在正式版）';
   }
   document.getElementById('betaSwitchModal').classList.add('active');
 }
@@ -700,80 +692,64 @@ function closeBetaSwitch() {
   document.getElementById('betaSwitchModal').classList.remove('active');
 }
 
-async function exportThenSwitch() {
-  const currentChannel = Store.getChannel();
-  const data = Store.exportChannelData(currentChannel);
+async function exportThenDownload() {
+  const data = Store.exportData();
   if (data) {
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-    const channelLabel = currentChannel === 'beta' ? 'beta' : 'formal';
+    const channel = Store.getChannel();
+    const channelLabel = channel === 'beta' ? 'beta' : 'formal';
     const filename = `qing-backup-${channelLabel}-${dateStr}.json`;
-    await downloadJSON(data, filename, '数据已导出，请确认切换');
+    await downloadJSON(data, filename, '数据已导出');
     setTimeout(() => {
       closeBetaSwitch();
-      showConfirm(
-        betaSwitchTarget === 'beta' ? '确认切换到 Beta' : '确认切回正式版',
-        betaSwitchTarget === 'beta' ? '数据已备份，确认切换到 Beta 版吗？' : '数据已备份，确认切回正式版吗？',
-        () => doBetaSwitch()
-      );
-    }, 1200);
+      downloadOtherAPK();
+    }, 1500);
   } else {
-    Store.toast('当前通道无数据可导出');
+    Store.toast('无数据需要备份');
     closeBetaSwitch();
-    showConfirm(
-      betaSwitchTarget === 'beta' ? '确认切换到 Beta' : '确认切回正式版',
-      betaSwitchTarget === 'beta' ? '无数据需要备份，确认切换到 Beta 版吗？' : '无数据需要备份，确认切回正式版吗？',
-      () => doBetaSwitch()
-    );
+    downloadOtherAPK();
   }
 }
 
-function directSwitch() {
+async function downloadOtherAPK() {
   closeBetaSwitch();
-  showConfirm(
-    betaSwitchTarget === 'beta' ? '确认切换到 Beta' : '确认切回正式版',
-    betaSwitchTarget === 'beta' ? '确定不备份就切换吗？正式版数据会保留，但 Beta 版里看不到。' : '确定不备份就切换吗？Beta 版数据会保留，但正式版里看不到。',
-    () => doBetaSwitch()
-  );
-}
+  const channel = Store.getChannel();
+  const apkUrl = channel === 'beta'
+    ? API_BASE + '/api/download/apk'
+    : API_BASE + '/api/download/apk/beta';
 
-function doBetaSwitch() {
-  Store.switchChannel(betaSwitchTarget);
-  Store.toast(betaSwitchTarget === 'beta' ? '欢迎加入 Beta 测试' : '已切回正式版');
-  setTimeout(() => {
-    document.getElementById('betaImportTip').textContent = betaSwitchTarget === 'beta' ? '切换成功！要把刚才导出的正式版数据导入到 Beta 吗？' : '切换成功！要把刚才导出的 Beta 数据导入到正式版吗？';
-    document.getElementById('betaImportTitle').textContent = '导入数据';
-    document.getElementById('betaImportModal').classList.add('active');
-  }, 1000);
-}
+  if (!isNativeApp) {
+    // 浏览器：直接打开下载链接
+    window.open(apkUrl, '_blank');
+    return;
+  }
 
-function closeBetaImport() {
-  document.getElementById('betaImportModal').classList.remove('active');
-  setTimeout(() => location.reload(), 300);
-}
+  // 原生 APP：下载 APK 并触发安装
+  Store.toast('正在下载，请稍候...');
+  try {
+    const apkResp = await fetch(apkUrl);
+    const blob = await apkResp.blob();
+    const base64 = await blobToBase64(blob);
 
-function handleBetaImportFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const success = Store.importData(e.target.result);
-    if (success) {
-      Store.toast('数据导入成功');
-      document.getElementById('betaImportModal').classList.remove('active');
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      Store.toast('导入失败：文件格式错误');
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
+    const writeResult = await FilesystemPlugin.writeFile({
+      path: 'qing-update.apk',
+      data: base64,
+      directory: 'CACHE',
+      recursive: true
+    });
+
+    await FileOpenerPlugin.open({
+      filePath: writeResult.uri,
+      contentType: 'application/vnd.android.package-archive'
+    });
+  } catch (err) {
+    Store.toast('下载失败，请重试');
+  }
 }
 
 // ===== 版本更新 =====
 
-const API_BASE = 'https://qing6340.duckdns.org';
-const isNativeApp = window.Capacitor && window.Capacitor.isNative;
 let updateInfo = null;
 
 function checkUpdate() {
@@ -830,11 +806,7 @@ function openVersionModal(hasUpdate, data) {
       });
     }
     downloadBtn.style.display = 'block';
-    if (isNativeApp) {
-      downloadBtn.textContent = '下载安装';
-    } else {
-      downloadBtn.textContent = '刷新更新';
-    }
+    downloadBtn.textContent = isNativeApp ? '下载安装' : '刷新更新';
   } else {
     changelogBox.style.display = 'none';
     downloadBtn.style.display = 'none';
@@ -867,21 +839,20 @@ async function downloadAndUpdate() {
     const blob = await apkResp.blob();
     const base64 = await blobToBase64(blob);
 
-    const Filesystem = Capacitor.Plugins.Filesystem;
-    const FileOpener = Capacitor.Plugins.FileOpener;
-
-    const fileName = 'qing-update.apk';
-    const writeResult = await Filesystem.writeFile({
-      path: fileName,
+    const writeResult = await FilesystemPlugin.writeFile({
+      path: 'qing-update.apk',
       data: base64,
       directory: 'CACHE',
       recursive: true
     });
 
-    await FileOpener.open({
+    await FileOpenerPlugin.open({
       filePath: writeResult.uri,
       contentType: 'application/vnd.android.package-archive'
     });
+
+    downloadBtn.textContent = '下载安装';
+    downloadBtn.disabled = false;
   } catch (err) {
     downloadBtn.textContent = '下载失败，重试';
     downloadBtn.disabled = false;
@@ -919,9 +890,6 @@ document.getElementById('versionModal').addEventListener('click', (e) => {
 });
 document.getElementById('betaSwitchModal').addEventListener('click', (e) => {
   if (e.target.id === 'betaSwitchModal') closeBetaSwitch();
-});
-document.getElementById('betaImportModal').addEventListener('click', (e) => {
-  if (e.target.id === 'betaImportModal') closeBetaImport();
 });
 document.getElementById('aboutModal').addEventListener('click', (e) => {
   if (e.target.id === 'aboutModal') closeAbout();
