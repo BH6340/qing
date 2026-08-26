@@ -34,9 +34,10 @@ LATEST_BETA_VERSION = {
     "version": "1.1.0-beta.2",
     "release_date": "2026-08-27",
     "changelog": [
-        "修复导出数据问题（Filesystem插件注册+外部存储目录）",
-        "优化Beta切换为下载APK方式",
-        "删除通道切换相关代码"
+        "Fix export data (Filesystem plugin register + EXTERNAL directory)",
+        "Beta switch to download APK instead of channel switch",
+        "Remove channel switch code",
+        "Fix publish script encoding"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
