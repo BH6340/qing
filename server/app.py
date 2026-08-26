@@ -125,21 +125,37 @@ def health():
 
 
 def compare_versions(v1, v2):
-    """1 if v1 > v2, -1 if v1 < v2, 0 if equal"""
-    try:
-        parts1 = [int(x) for x in v1.split('.')]
-        parts2 = [int(x) for x in v2.split('.')]
-        max_len = max(len(parts1), len(parts2))
-        parts1 += [0] * (max_len - len(parts1))
-        parts2 += [0] * (max_len - len(parts2))
-        for a, b in zip(parts1, parts2):
-            if a > b:
-                return 1
-            if a < b:
-                return -1
-        return 0
-    except:
-        return 0
+    """1 if v1 > v2, -1 if v1 < v2, 0 if equal. Supports beta suffix."""
+    import re
+    def parse(v):
+        m = re.match(r'^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$', v)
+        if m:
+            major, minor, patch, beta = m.groups()
+            return (int(major), int(minor), int(patch), int(beta) if beta else None)
+        parts = []
+        for x in v.split('.'):
+            try:
+                parts.append(int(x))
+            except ValueError:
+                parts.append(0)
+        while len(parts) < 4:
+            parts.append(0)
+        return tuple(parts[:3]) + (None,)
+
+    p1 = parse(v1)
+    p2 = parse(v2)
+
+    for i in range(3):
+        if p1[i] > p2[i]: return 1
+        if p1[i] < p2[i]: return -1
+
+    b1, b2 = p1[3], p2[3]
+    if b1 is None and b2 is None: return 0
+    if b1 is None: return 1
+    if b2 is None: return -1
+    if b1 > b2: return 1
+    if b1 < b2: return -1
+    return 0
 
 
 if __name__ == '__main__':
