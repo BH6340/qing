@@ -1,6 +1,6 @@
 /* 轻 · 日历 Service Worker */
 
-const CACHE_NAME = 'qing-cache-v2';
+const CACHE_NAME = 'qing-cache-v3';
 const ASSETS = [
   './',
   './index.html',
