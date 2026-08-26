@@ -586,19 +586,46 @@ function toggleSarcasm() {
 
 function exportData() {
   const data = Store.exportData();
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
   const now = new Date();
   const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const filename = `qing-backup-${dateStr}.json`;
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  Store.toast('数据已导出');
+  downloadJSON(data, filename, '数据已导出');
+}
+
+async function downloadJSON(jsonStr, filename, successMsg) {
+  // 原生 APP：用 Capacitor Filesystem 写文件
+  if (window.Capacitor && Capacitor.Plugins.Filesystem) {
+    try {
+      const { Filesystem, Directory, Encoding } = Capacitor.Plugins.Filesystem;
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: jsonStr,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8,
+      });
+      Store.toast(successMsg || '数据已导出');
+      // 尝试用 FileOpener 打开文件（让用户可以分享/保存）
+      if (Capacitor.Plugins.FileOpener) {
+        try {
+          await Capacitor.Plugins.FileOpener.open({ filePath: result.uri, contentType: 'application/json' });
+        } catch(e) { /* 用户取消或插件不可用，文件已在文档目录 */ }
+      }
+    } catch(e) {
+      Store.toast('导出失败：' + (e.message || e));
+    }
+  } else {
+    // 浏览器/PWA：标准下载
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    Store.toast(successMsg || '数据已导出');
+  }
 }
 
 function importData() {
@@ -673,24 +700,15 @@ function closeBetaSwitch() {
   document.getElementById('betaSwitchModal').classList.remove('active');
 }
 
-function exportThenSwitch() {
+async function exportThenSwitch() {
   const currentChannel = Store.getChannel();
   const data = Store.exportChannelData(currentChannel);
   if (data) {
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
     const channelLabel = currentChannel === 'beta' ? 'beta' : 'formal';
     const filename = `qing-backup-${channelLabel}-${dateStr}.json`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    Store.toast('数据已导出，请确认切换');
+    await downloadJSON(data, filename, '数据已导出，请确认切换');
     setTimeout(() => {
       closeBetaSwitch();
       showConfirm(
@@ -698,7 +716,7 @@ function exportThenSwitch() {
         betaSwitchTarget === 'beta' ? '数据已备份，确认切换到 Beta 版吗？' : '数据已备份，确认切回正式版吗？',
         () => doBetaSwitch()
       );
-    }, 800);
+    }, 1200);
   } else {
     Store.toast('当前通道无数据可导出');
     closeBetaSwitch();
