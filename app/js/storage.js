@@ -26,6 +26,19 @@ const Store = (function() {
 
   let STORAGE_KEY = getStorageKey();
 
+  // 自动检测通道：从 HTML meta 标签判断
+  // <meta name="app-channel" content="beta"> 表示 Beta 版 APK
+  // 仅在用户未手动切换过通道时生效，不影响用户后续手动切换
+  (function autoDetectChannel() {
+    var meta = document.querySelector('meta[name="app-channel"]');
+    if (meta && meta.content === 'beta') {
+      if (!localStorage.getItem(CHANNEL_KEY)) {
+        localStorage.setItem(CHANNEL_KEY, 'beta');
+        STORAGE_KEY = getStorageKey();
+      }
+    }
+  })();
+
   // 默认数据结构
   const defaultData = {
     weights: {},        // { "2026-8-24": { value: 62.4, time: "09:00" } }
