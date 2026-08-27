@@ -5,3 +5,4 @@ android/local.properties
 *.log
 __pycache__/
 .DS_Store
+apks/*.apk
