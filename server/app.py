@@ -34,10 +34,11 @@ LATEST_BETA_VERSION = {
     "version": "1.1.0-beta.2",
     "release_date": "2026-08-27",
     "changelog": [
-        "Fix export data (Filesystem plugin register + EXTERNAL directory)",
-        "Beta switch to download APK instead of channel switch",
-        "Remove channel switch code",
-        "Fix publish script encoding"
+        "修复数据导出功能（Filesystem 插件注册 + 外部存储目录）",
+        "Beta 切换改为下载 APK 安装，不再切通道标记",
+        "修复版本比较函数，支持 beta 版本号",
+        "清理服务器旧 APK，只保留最新版本",
+        "版本更新和 Beta 切换支持浏览器回退下载"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
@@ -92,23 +93,13 @@ def download_apk():
 
 @app.route('/api/download/apk/beta')
 def download_beta_apk():
-    # Find the latest beta apk in apks directory
-    beta_apks = []
-    if os.path.exists(APK_DIR):
-        for f in os.listdir(APK_DIR):
-            if f.startswith('app-beta') and f.endswith('.apk'):
-                full_path = os.path.join(APK_DIR, f)
-                beta_apks.append((os.path.getmtime(full_path), full_path))
-    if beta_apks:
-        beta_apks.sort(reverse=True)
-        apk_path = beta_apks[0][1]
-    else:
-        # fallback to release
+    apk_path = os.path.join(APK_DIR, 'app-beta-latest.apk')
+    if not os.path.exists(apk_path):
         apk_path = os.path.join(APK_DIR, 'app-release.apk')
     if not os.path.exists(apk_path):
         return jsonify({"error": "Beta APK not found"}), 404
     return send_from_directory(
-        os.path.dirname(apk_path),
+        APK_DIR,
         os.path.basename(apk_path),
         as_attachment=True,
         download_name='qing-calendar-beta.apk'

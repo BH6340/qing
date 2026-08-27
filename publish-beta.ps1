@@ -151,12 +151,12 @@ Write-Host "  Version: v$Version (beta)" -ForegroundColor Yellow
 Write-Host "  APK:     $apkSize MB" -ForegroundColor Yellow
 Write-Host "  Date:    $today" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  测试步骤：" -ForegroundColor White
-Write-Host "  1. 打开 APP -> 设置 -> Beta 测试计划 -> 加入 Beta" -ForegroundColor White
-Write-Host "  2. 设置 -> 版本更新 -> 检查更新（会收到 beta 更新）" -ForegroundColor White
-Write-Host "  3. 下载安装 beta 版" -ForegroundColor White
+Write-Host "  Test steps:" -ForegroundColor White
+Write-Host "  1. Open APP -> Settings -> Beta Test Plan -> Join Beta" -ForegroundColor White
+Write-Host "  2. Settings -> Version Update -> Check (will get beta update)" -ForegroundColor White
+Write-Host "  3. Download and install beta APK" -ForegroundColor White
 Write-Host ""
-Write-Host "  接口验证：" -ForegroundColor White
+Write-Host "  API verify:" -ForegroundColor White
 Write-Host "  https://qing6340.duckdns.org/api/version?channel=beta" -ForegroundColor White
 Write-Host "==========================================" -ForegroundColor DarkYellow
 Write-Host ""

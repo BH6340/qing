@@ -126,11 +126,14 @@ powershell -ExecutionPolicy Bypass -File publish-beta.ps1 -Version "X.Y.Z-beta.N
 
 ## 注意事项
 
-- **语言**：始终用中文
+- **语言**：始终用中文，包括 changelog 内容（脚本传入的 `-Changelog` 参数必须是中文）
 - **安全**：不要在输出中暴露密码、密钥等敏感信息
 - **确认**：执行发布前必须让用户确认，不能擅自发布
 - **回滚**：如果发布失败，提示用户可以 `git revert` 回滚
 - **README 更新**：正式版发布后提醒用户要不要顺便更新 README 版本历史
 - **服务器**：确保 SSH 免密登录可用，docker 命令无需 sudo
 - **通道机制**：通道由 APK 中的 `meta name="app-channel"` 标签决定，不再通过 localStorage 手动切换。用户切换版本通过下载安装另一个 APK 实现
-- **Capacitor 插件**：settings.html 中通过 `Capacitor.registerPlugin('Filesystem')` 和 `Capacitor.registerPlugin('FileOpener')` 注册插件，不依赖 ES module import
+- **Capacitor 插件**：settings.html 中通过 `Capacitor.registerPlugin('Filesystem')` 和 `Capacitor.registerPlugin('FileOpener')` 注册插件，同时有 `Capacitor.Plugins` 回退机制。插件未就绪时自动回退到 `window.open` 浏览器下载
+- **APK 管理**：服务器上只保留 `app-beta-latest.apk` 和 `app-release.apk`，每次发布覆盖旧文件，不保留历史版本
+- **版本比较**：服务端 `compare_versions` 已支持 beta 版本号（如 `1.1.0-beta.1`），正确处理 `-beta.N` 后缀
+- **脚本编码**：PowerShell 脚本中的 Write-Host 用英文避免中文乱码，changelog 内容通过参数传入不受影响
