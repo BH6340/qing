@@ -14,7 +14,7 @@ import json
 app = Flask(__name__, static_folder='../app', static_url_path='')
 CORS(app)
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.1.0"
 APK_DIR = os.path.join(os.path.dirname(__file__), '..', 'apks')
 EXPORT_DIR = os.path.join(os.path.dirname(__file__), '..', 'export_tmp')
 EXPORT_TTL_SECONDS = 3600  # 临时文件保留 1 小时
@@ -22,12 +22,15 @@ _export_store = {}  # {token: {"file_path": str, "expire_at": float, "filename":
 
 # === LATEST_VERSION_START ===
 LATEST_VERSION = {
-    "version": "1.0.1",
-    "release_date": "2026-08-25",
+    "version": "1.1.0",
+    "release_date": "2026-08-27",
     "changelog": [
-        "恢复PWA离线缓存（iOS可用）",
-        "支持APP内检查更新并下载安装",
-        "清理多余开屏资源"
+        "新增config.js统一配置文件，版本号通道API地址集中管理",
+        "版本更新弹窗优化：最新版本与当前版本上下排列",
+        "Beta切换弹窗优化：导出备份/直接下载二选一列表",
+        "导出数据改为浏览器下载，后端生成临时文件1小时自动过期",
+        "修复Service Worker在APK环境下误注册导致缓存旧文件的问题",
+        "修复发布脚本构建缓存和stderr误报等问题"
     ],
     "apk_url": "/api/download/apk",
     "is_force_update": False,
