@@ -5,7 +5,7 @@
    ======================================== */
 
 window.APP_CONFIG = {
-  version: '1.1.0-beta.3',
+  version: '1.1.0-beta.4',
   channel: 'beta',
   apiBase: 'https://qing6340.duckdns.org'
 };

@@ -7,12 +7,18 @@ Flask backend: version check + APK download + static hosting
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 import os
+import uuid
+import time
+import json
 
 app = Flask(__name__, static_folder='../app', static_url_path='')
 CORS(app)
 
 APP_VERSION = "1.0.1"
 APK_DIR = os.path.join(os.path.dirname(__file__), '..', 'apks')
+EXPORT_DIR = os.path.join(os.path.dirname(__file__), '..', 'export_tmp')
+EXPORT_TTL_SECONDS = 3600  # 临时文件保留 1 小时
+_export_store = {}  # {token: {"file_path": str, "expire_at": float, "filename": str}}
 
 # === LATEST_VERSION_START ===
 LATEST_VERSION = {
@@ -31,13 +37,13 @@ LATEST_VERSION = {
 
 # === LATEST_BETA_VERSION_START ===
 LATEST_BETA_VERSION = {
-    "version": "1.1.0-beta.3",
+    "version": "1.1.0-beta.4",
     "release_date": "2026-08-27",
     "changelog": [
-        "新增config.js统一配置文件，版本号通道API地址集中管理",
-        "优化发布脚本，构建前自动clean旧缓存、构建后验证APK内版本号",
-        "优化数据导出，四重回退机制",
-        "修复构建缓存导致版本号不更新的问题"
+        "新增后端导出接口，数据导出改为浏览器下载",
+        "清除HTML中所有硬编码版本号，全部从config.js动态读取",
+        "修复发布脚本中gradle和ssh的stderr误报问题",
+        "修复clean构建时Gradle Daemon文件占用的问题"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
@@ -102,6 +108,91 @@ def download_beta_apk():
         os.path.basename(apk_path),
         as_attachment=True,
         download_name='qing-calendar-beta.apk'
+    )
+
+
+def _cleanup_expired_exports():
+    """清理过期的导出文件"""
+    now = time.time()
+    expired = [t for t, info in _export_store.items() if info["expire_at"] < now]
+    for token in expired:
+        info = _export_store.pop(token)
+        try:
+            if os.path.exists(info["file_path"]):
+                os.remove(info["file_path"])
+        except OSError:
+            pass
+
+
+@app.route('/api/export', methods=['POST'])
+def create_export():
+    """接收前端数据，生成临时文件，返回下载链接"""
+    _cleanup_expired_exports()
+
+    data = request.get_data(as_text=True)
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    # 基本校验：必须是合法 JSON
+    try:
+        json.loads(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON data"}), 400
+
+    # 大小限制：5MB
+    if len(data) > 5 * 1024 * 1024:
+        return jsonify({"error": "Data too large"}), 413
+
+    os.makedirs(EXPORT_DIR, exist_ok=True)
+
+    token = uuid.uuid4().hex
+    now = time.strftime("%Y%m%d")
+    filename = f"qing-backup-{now}.json"
+    file_path = os.path.join(EXPORT_DIR, f"{token}.json")
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(data)
+
+    _export_store[token] = {
+        "file_path": file_path,
+        "expire_at": time.time() + EXPORT_TTL_SECONDS,
+        "filename": filename
+    }
+
+    return jsonify({
+        "token": token,
+        "download_url": f"/api/export/download/{token}",
+        "expire_in": EXPORT_TTL_SECONDS
+    })
+
+
+@app.route('/api/export/download/<token>')
+def download_export(token):
+    """下载导出的备份文件"""
+    _cleanup_expired_exports()
+
+    info = _export_store.get(token)
+    if not info:
+        return jsonify({"error": "Export not found or expired"}), 404
+
+    if time.time() > info["expire_at"]:
+        _export_store.pop(token, None)
+        try:
+            if os.path.exists(info["file_path"]):
+                os.remove(info["file_path"])
+        except OSError:
+            pass
+        return jsonify({"error": "Export expired"}), 404
+
+    if not os.path.exists(info["file_path"]):
+        _export_store.pop(token, None)
+        return jsonify({"error": "File not found"}), 404
+
+    return send_from_directory(
+        EXPORT_DIR,
+        os.path.basename(info["file_path"]),
+        as_attachment=True,
+        download_name=info["filename"]
     )
 
 

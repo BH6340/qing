@@ -305,7 +305,7 @@
   <div class="app-info">
     <div class="app-logo">轻</div>
     <div class="app-name">轻 · 日历</div>
-    <div class="app-version">QING · v<span id="verText">1.1.0-beta.2</span><span class="beta-badge" id="betaBadge" style="display:none;">BETA</span></div>
+    <div class="app-version">QING · v<span id="verText">--</span><span class="beta-badge" id="betaBadge" style="display:none;">BETA</span></div>
   </div>
 
   <div class="settings-group">
@@ -379,7 +379,7 @@
           <div class="setting-label">版本更新</div>
           <div class="setting-desc">检查是否有新版本</div>
         </div>
-        <span class="version-badge" id="versionBadge">v1.1.0-beta.2</span>
+        <span class="version-badge" id="versionBadge">v--</span>
       </div>
 
       <div class="setting-item" onclick="betaSwitchChannel()">
@@ -466,7 +466,7 @@
     <div class="modal-subtitle" id="versionSubtitle">当前已是最新版本</div>
 
     <div class="version-detail">
-      <div class="ver-num" id="verNum">v1.1.0-beta.2</div>
+      <div class="ver-num" id="verNum">v--</div>
       <div class="ver-label">当前版本</div>
     </div>
 
@@ -513,7 +513,7 @@
     <div style="text-align:center; padding: 20px 0;">
       <div style="width:64px;height:64px;margin:0 auto 14px;background:linear-gradient(135deg,var(--accent-light),var(--accent));border-radius:18px;display:flex;align-items:center;justify-content:center;color:white;font-family:'Noto Serif SC',serif;font-size:26px;font-weight:600;box-shadow:0 6px 20px rgba(196,149,106,0.3);">轻</div>
       <div style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;letter-spacing:3px;">轻 · 日历</div>
-      <div style="font-size:12px;color:var(--ink-mute);margin-top:4px;letter-spacing:2px;">QING · v1.1.0-beta.2</div>
+      <div id="aboutVersion" style="font-size:12px;color:var(--ink-mute);margin-top:4px;letter-spacing:2px;">QING · v--</div>
     </div>
 
     <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;text-align:center;padding: 0 12px 24px;">
@@ -543,6 +543,19 @@ function init() {
   const settings = Store.getSettings();
   updateToggle('sarcasmToggle', settings.sarcasm);
   updateBetaBadge();
+  updateVersionDisplay();
+}
+
+function updateVersionDisplay() {
+  const ver = APP_VERSION;
+  const verText = document.getElementById('verText');
+  const versionBadge = document.getElementById('versionBadge');
+  const verNum = document.getElementById('verNum');
+  const aboutVersion = document.getElementById('aboutVersion');
+  if (verText) verText.textContent = ver;
+  if (versionBadge) versionBadge.textContent = 'v' + ver;
+  if (verNum) verNum.textContent = 'v' + ver;
+  if (aboutVersion) aboutVersion.textContent = 'QING · v' + ver;
 }
 
 function updateBetaBadge() {
@@ -583,97 +596,45 @@ function exportData() {
 }
 
 async function downloadJSON(jsonStr, filename, successMsg) {
-  const FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
-  const FileOpener = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FileOpener;
 
-  // ===== 方案1: Filesystem 写入 + FileOpener 打开 =====
-  if (FS && isNativeApp) {
-    try {
-      // 写到缓存目录，然后让用户选择怎么处理
-      const result = await FS.writeFile({
-        path: filename,
-        data: jsonStr,
-        directory: 'Cache',
-        encoding: 'utf8',
-        recursive: true
-      });
-
-      // 获取文件的真实路径
-      let fileUri = result.uri;
-      if (!fileUri && result.path) {
-        fileUri = result.path;
+  // ===== 方案1: 后端生成文件 + 浏览器下载 =====
+  try {
+    Store.toast('正在生成导出文件...');
+    const resp = await fetch(API_BASE + '/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: jsonStr
+    });
+    if (!resp.ok) throw new Error('Server returned ' + resp.status);
+    const data = await resp.json();
+    if (data && data.download_url) {
+      const downloadUrl = API_BASE + data.download_url;
+      // APP 环境跳系统浏览器，浏览器环境直接打开
+      if (isNativeApp && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+        window.Capacitor.Plugins.Browser.open({ url: downloadUrl });
+      } else {
+        window.open(downloadUrl, '_blank');
       }
-
-      // 尝试用 FileOpener 打开，用户可以选择"保存到文件"或分享
-      if (FileOpener && fileUri) {
-        try {
-          await FileOpener.open({
-            filePath: fileUri,
-            contentType: 'application/json',
-            openWithDefault: false
-          });
-          Store.toast('请选择保存或分享方式');
-          return;
-        } catch (e) {
-          console.log('FileOpener 打开失败，继续尝试其他方式:', e.message);
-        }
-      }
-
-      // FileOpener 不可用或失败，至少告诉用户文件位置
-      Store.toast('已保存到应用缓存：' + filename);
+      Store.toast('已打开浏览器下载');
       return;
-    } catch (e) {
-      console.log('Filesystem 写入失败，尝试下一种方式:', e.message);
     }
+    throw new Error('Invalid response');
+  } catch (e) {
+    console.log('服务器导出失败，尝试剪贴板:', e.message);
   }
 
-  // ===== 方案2: Web Share API 系统分享 =====
-  if (navigator.share && window.Blob && window.File) {
-    try {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const file = new File([blob], filename, { type: 'application/json' });
-      await navigator.share({
-        title: '轻日历数据备份',
-        text: '轻日历数据备份文件',
-        files: [file]
-      });
-      Store.toast('已调出分享面板');
-      return;
-    } catch (e) {
-      // 用户取消分享不算错误
-      if (e.name !== 'AbortError') {
-        console.log('Web Share 失败，继续尝试下一种方式:', e.message);
-      }
-    }
-  }
-
-  // ===== 方案3: 复制到剪贴板（兜底） =====
+  // ===== 方案2: 复制到剪贴板（兜底） =====
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(jsonStr);
       Store.toast('数据已复制到剪贴板，可粘贴保存');
       return;
     } catch (e) {
-      console.log('剪贴板复制失败，尝试最后一种方式:', e.message);
+      console.log('剪贴板复制失败:', e.message);
     }
   }
 
-  // ===== 方案4: 浏览器 a.download（PWA/浏览器环境） =====
-  try {
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    Store.toast(successMsg || '数据已导出');
-  } catch (e) {
-    console.log('所有导出方式都失败了:', e.message);
-    Store.toast('导出失败，请截图保存数据');
-  }
+  Store.toast('导出失败，请检查网络连接');
 }
 
 function importData() {
