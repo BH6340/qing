@@ -669,8 +669,18 @@
 <script src="js/config.js"></script>
 <script src="js/storage.js"></script>
 <script>
-const APP_VERSION = APP_CONFIG.version;
-const API_BASE = APP_CONFIG.apiBase;
+// 兜底：如果 config.js 加载失败或字段缺失，使用默认值
+const _defaultConfig = {
+  version: '1.1.0',
+  channel: 'formal',
+  apiBase: 'https://qing6340.duckdns.org'
+};
+if (!window.APP_CONFIG) window.APP_CONFIG = {};
+if (!window.APP_CONFIG.version) window.APP_CONFIG.version = _defaultConfig.version;
+if (!window.APP_CONFIG.channel) window.APP_CONFIG.channel = _defaultConfig.channel;
+if (!window.APP_CONFIG.apiBase) window.APP_CONFIG.apiBase = _defaultConfig.apiBase;
+const APP_VERSION = window.APP_CONFIG.version;
+const API_BASE = window.APP_CONFIG.apiBase;
 let confirmCallback = null;
 
 const isNativeApp = window.Capacitor && (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() === 'android' : window.Capacitor.platform === 'android');

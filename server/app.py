@@ -40,14 +40,14 @@ LATEST_VERSION = {
 
 # === LATEST_BETA_VERSION_START ===
 LATEST_BETA_VERSION = {
-    "version": "1.1.1-beta.1",
+    "version": "1.1.1-beta.2",
     "release_date": "2026-08-27",
     "changelog": [
+        "修复版本号显示undefined的问题",
         "新增待办事项模块，长期目标不限日期全局共用",
         "今日待办改名为今日打卡，概念更清晰",
         "过去日期未完成打卡显示红叉灰色，操作有毒舌确认提醒",
-        "主页底部卡片升级：体重待办打卡三列展示",
-        "数据结构升级，新旧版本双向兼容自动迁移"
+        "主页底部卡片升级：体重待办打卡三列展示"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
