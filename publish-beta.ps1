@@ -14,6 +14,12 @@ $ErrorActionPreference = "Stop"
 $projectDir = "e:\BH\Android\qing"
 $server = "bh@103.100.211.146"
 $remoteDir = "~/qing"
+$gradleExe = "C:\Users\Administrator\.gradle\wrapper\dists\gradle-8.14.3-all\cbf6zifq8xavouihta8md72jo\gradle-8.14.3\bin\gradle.bat"
+
+# Environment for Gradle/Android build
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot"
+$env:ANDROID_HOME = "E:\software\Android\SDK"
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor DarkYellow
@@ -22,7 +28,7 @@ Write-Host "==========================================" -ForegroundColor DarkYel
 Write-Host ""
 
 # ===== 1. Update beta version in app.py =====
-Write-Host "[1/6] Update beta version info..." -ForegroundColor Cyan
+Write-Host "[1/7] Update beta version info in backend..." -ForegroundColor Cyan
 
 $appPath = "$projectDir\server\app.py"
 $content = Get-Content $appPath -Raw -Encoding UTF8
@@ -56,37 +62,46 @@ Write-Host "  release_date -> $today" -ForegroundColor Green
 Write-Host "  changelog -> $($changeLines.Count) items" -ForegroundColor Green
 Write-Host ""
 
-# ===== 2. Update frontend APP_VERSION & channel meta =====
-Write-Host "[2/6] Update frontend version..." -ForegroundColor Cyan
-$htmlFiles = @("settings.html", "index.html", "todo.html", "detail.html")
-foreach ($htmlFile in $htmlFiles) {
-    $htmlPath = "$projectDir\app\$htmlFile"
-    $htmlContent = Get-Content $htmlPath -Raw -Encoding UTF8
-    if ($htmlFile -eq "settings.html") {
-        $htmlContent = $htmlContent -replace "const APP_VERSION = '[^']+';", "const APP_VERSION = '$Version';"
-    }
-    $htmlContent = $htmlContent -replace 'name="app-channel" content="[^"]*"', 'name="app-channel" content="beta"'
-    Set-Content $htmlPath $htmlContent -NoNewline -Encoding UTF8
-}
-Write-Host "  APP_VERSION -> $Version" -ForegroundColor Green
-Write-Host "  app-channel -> beta" -ForegroundColor Green
+# ===== 2. Update frontend config.js =====
+Write-Host "[2/7] Update frontend config.js..." -ForegroundColor Cyan
+$configPath = "$projectDir\app\js\config.js"
+$configContent = Get-Content $configPath -Raw -Encoding UTF8
+$configContent = $configContent -replace "version: '[^']+',", "version: '$Version',"
+$configContent = $configContent -replace "channel: '[^']+',", "channel: 'beta',"
+Set-Content $configPath $configContent -NoNewline -Encoding UTF8
+Write-Host "  version -> $Version" -ForegroundColor Green
+Write-Host "  channel -> beta" -ForegroundColor Green
 Write-Host ""
 
-# ===== 3. Sync Capacitor =====
-Write-Host "[3/6] Sync Capacitor..." -ForegroundColor Cyan
+# ===== 3. Clean old build & Sync Capacitor =====
+Write-Host "[3/7] Clean old build & sync Capacitor..." -ForegroundColor Cyan
 Push-Location $projectDir
+# Stop Gradle daemon first to release file locks
+& $gradleExe --stop 2>&1 | Out-Null
+Start-Sleep -Seconds 2
+# Clean old build outputs to avoid stale cache
+$buildDir = "$projectDir\android\app\build"
+if (Test-Path $buildDir) {
+  try {
+    Remove-Item $buildDir -Recurse -Force -ErrorAction Stop
+    Write-Host "  Cleaned old build directory" -ForegroundColor Green
+  } catch {
+    Write-Host "  WARNING: Could not fully clean build dir: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "  Will continue with build (Gradle will overwrite changed files)" -ForegroundColor Yellow
+  }
+}
 npx cap copy android 2>&1 | Out-Null
-Write-Host "  Done" -ForegroundColor Green
+Write-Host "  Capacitor synced" -ForegroundColor Green
+Pop-Location
 Write-Host ""
 
 # ===== 4. Build APK =====
-Write-Host "[4/6] Build Beta APK..." -ForegroundColor Cyan
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot"
-$env:ANDROID_HOME = "E:\software\Android\SDK"
-$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
-$gradleExe = "C:\Users\Administrator\.gradle\wrapper\dists\gradle-8.14.3-all\cbf6zifq8xavouihta8md72jo\gradle-8.14.3\bin\gradle.bat"
+Write-Host "[4/7] Build Beta APK..." -ForegroundColor Cyan
 Push-Location "$projectDir\android"
-& $gradleExe assembleRelease --offline 2>&1 | Select-String "BUILD|FAIL|error:"
+& $gradleExe assembleRelease --offline 2>&1 | ForEach-Object {
+  $line = $_.ToString()
+  if ($line -match "BUILD|FAIL|error:") { Write-Host "  $line" }
+}
 Pop-Location
 $apkPath = "$projectDir\android\app\build\outputs\apk\release\app-release.apk"
 if (-not (Test-Path $apkPath)) {
@@ -97,8 +112,47 @@ $apkSize = [math]::Round((Get-Item $apkPath).Length / 1MB, 1)
 Write-Host "  APK: $apkSize MB" -ForegroundColor Green
 Write-Host ""
 
-# ===== 5. Copy APK & deploy =====
-Write-Host "[5/6] Copy APK & deploy to server..." -ForegroundColor Cyan
+# ===== 5. Verify APK version =====
+Write-Host "[5/7] Verify APK version..." -ForegroundColor Cyan
+# Extract config.js from APK and check version
+$tempDir = "$env:TEMP\qing_apk_verify_$([System.Guid]::NewGuid().ToString('N'))"
+$verifyOk = $false
+try {
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $zip = [System.IO.Compression.ZipFile]::OpenRead($apkPath)
+  $entry = $zip.Entries | Where-Object { $_.FullName -eq 'assets/public/js/config.js' }
+  if ($entry) {
+    $reader = New-Object System.IO.StreamReader($entry.Open())
+    $configContent = $reader.ReadToEnd()
+    $reader.Close()
+    if ($configContent -match "version: '([^']+)'") {
+      $apkVersion = $Matches[1]
+      if ($apkVersion -eq $Version) {
+        Write-Host "  Verified: APK contains v$apkVersion" -ForegroundColor Green
+        $verifyOk = $true
+      } else {
+        Write-Host "  Version mismatch! APK has v$apkVersion, expected v$Version" -ForegroundColor Red
+      }
+    }
+  } else {
+    Write-Host "  WARNING: config.js not found in APK, skipping verification" -ForegroundColor Yellow
+    $verifyOk = $true
+  }
+  $zip.Dispose()
+} catch {
+  Write-Host "  WARNING: Verification failed: $($_.Exception.Message)" -ForegroundColor Yellow
+  $verifyOk = $true
+} finally {
+  if (Test-Path $tempDir) { Remove-Item $tempDir -Recurse -Force }
+}
+if (-not $verifyOk) {
+  Write-Host "  BUILD ABORTED: APK version verification failed" -ForegroundColor Red
+  exit 1
+}
+Write-Host ""
+
+# ===== 6. Copy APK & deploy =====
+Write-Host "[6/7] Copy APK & deploy to server..." -ForegroundColor Cyan
 Copy-Item $apkPath "$projectDir\apks\app-beta-latest.apk" -Force
 Write-Host "  -> apks\app-beta-latest.apk" -ForegroundColor Green
 
@@ -118,12 +172,15 @@ Write-Host "  APK uploaded" -ForegroundColor Green
 
 # Server deploy (pull code & restart)
 $ErrorActionPreference = "Continue"
-ssh $server "cd $remoteDir && git pull && docker compose restart" 2>&1
+ssh $server "cd $remoteDir && git pull && docker compose restart" 2>&1 | ForEach-Object {
+  $line = $_.ToString()
+  if ($line.Trim()) { Write-Host "  $line" }
+}
 $ErrorActionPreference = "Stop"
 Write-Host ""
 
-# ===== 6. Health check =====
-Write-Host "[6/6] Health check..." -ForegroundColor Cyan
+# ===== 7. Health check =====
+Write-Host "[7/7] Health check..." -ForegroundColor Cyan
 $maxRetries = 6
 $retry = 0
 $healthy = $false

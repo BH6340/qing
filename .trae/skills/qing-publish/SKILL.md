@@ -1,11 +1,12 @@
 ---
 name: "qing-publish"
-description: "轻日历一键发布技能，支持正式版和 Beta 版发布，自动更新版本号、构建APK、更新README、git推送、服务器部署。Invoke when user asks to publish, 发版, 发布正式版, 发beta版, or deploy the app."
+description: "轻日历发布技能，支持正式版和 Beta 版发布，生成 PowerShell 一键发布指令供用户手动执行。Invoke when user asks to publish, 发版, 发布正式版, 发beta版, or deploy the app."
 ---
 
 # 轻日历发布助手
 
-「轻 · 日历」项目的一键发布工具，支持正式版和 Beta 版。
+「轻 · 日历」项目的发布工具，支持正式版和 Beta 版。
+**当前模式：生成 PowerShell 指令，由用户手动执行**。等流程稳定后再改为自动运行。
 
 ## 触发时机
 
@@ -18,10 +19,9 @@ description: "轻日历一键发布技能，支持正式版和 Beta 版发布，
 - 项目目录：`e:\BH\Android\qing`
 - 正式发布脚本：`publish.ps1`
 - Beta 发布脚本：`publish-beta.ps1`
+- 配置文件：`app/js/config.js`（版本号、通道、API地址统一管理）
 - 服务器地址：`bh@103.100.211.146`
 - 服务器目录：`~/qing`
-- 服务器部署命令：`cd ~/qing && git pull && docker compose restart`
-- 健康检查：`https://qing6340.duckdns.org/api/health`
 
 ## 发布流程
 
@@ -37,10 +37,11 @@ description: "轻日历一键发布技能，支持正式版和 Beta 版发布，
 
 如果用户没给 changelog，先调用 qing-changelog 技能生成，再让用户确认。
 
-### 第二步：预览并确认
+### 第二步：预览并生成指令
 
-展示发布预览：
+展示发布预览，然后生成对应的 PowerShell 命令：
 
+**预览格式：**
 ```
 即将发布：v1.1.0-beta.1（Beta 版）
 更新内容：
@@ -48,92 +49,57 @@ description: "轻日历一键发布技能，支持正式版和 Beta 版发布，
   2. 优化日历切换动画
   3. 修复时间滚轮越界
 
-确认发布吗？
+确认信息正确吗？我给你生成发布指令。
 ```
 
-用户确认后再执行。
+用户确认后，生成命令（只生成，不执行）：
 
-### 第三步：执行发布
+#### 正式版发布命令
 
-#### 正式版发布
-
-调用 `publish.ps1` 脚本：
 ```powershell
-powershell -ExecutionPolicy Bypass -File publish.ps1 -Version "X.Y.Z" -Changelog "line1`nline2`nline3"
+cd e:\BH\Android\qing
+powershell -ExecutionPolicy Bypass -File publish.ps1 -Version "X.Y.Z" -Changelog "更新内容1`n更新内容2`n更新内容3"
 ```
 
-脚本自动完成：
-1. 更新 `settings.html` 的 `APP_VERSION`
-2. 更新所有 HTML 页面的 `meta name="app-channel"` 为 `content="formal"`
-3. 更新 `server/app.py` 的 `LATEST_VERSION`、release_date、changelog
-4. `npx cap copy android` 同步代码
-5. 构建 Release APK
-6. 复制 APK 到 `apks/app-release.apk`
-7. Git add + commit + push
-8. SSH 服务器 `git pull && docker compose restart`
+#### Beta 版发布命令
 
-#### Beta 版发布
-
-调用 `publish-beta.ps1` 脚本：
 ```powershell
-powershell -ExecutionPolicy Bypass -File publish-beta.ps1 -Version "X.Y.Z-beta.N" -Changelog "line1`nline2`nline3"
+cd e:\BH\Android\qing
+powershell -ExecutionPolicy Bypass -File publish-beta.ps1 -Version "X.Y.Z-beta.N" -Changelog "更新内容1`n更新内容2`n更新内容3"
 ```
 
-脚本自动完成：
-1. 更新 `server/app.py` 的 `LATEST_BETA_VERSION`
-2. 更新 `settings.html` 的 `APP_VERSION`
-3. 更新所有 HTML 页面的 `meta name="app-channel"` 为 `content="beta"`
-4. `npx cap copy android` 同步代码
-5. 构建 Release APK
-6. 复制 APK 到 `apks/app-beta-{version}.apk` 和 `apks/app-beta-latest.apk`
-7. Git add + commit + push
-8. SSH 服务器 `git pull && docker compose restart`
+### 第三步：说明脚本做了什么
 
-### 第四步：更新 README.md
+告诉用户脚本会自动完成以下步骤：
 
-**正式版**需要更新 README.md 的版本历史：
-1. 在"版本历史"章节最上方插入新版本
-2. 格式：`### vX.Y.Z (YYYY-MM-DD)`
-3. 下面列 changelog
+| 步骤 | 说明 |
+|------|------|
+| 1 | 更新 `app/js/config.js` 的版本号和通道 |
+| 2 | 更新 `server/app.py` 的版本信息（LATEST_VERSION / LATEST_BETA_VERSION） |
+| 3 | Clean 旧构建缓存（删除 `android/app/build/`） |
+| 4 | `npx cap copy android` 同步 Web 资源 |
+| 5 | Gradle 构建 Release APK |
+| 6 | 验证 APK 内的版本号是否正确（不匹配则中止） |
+| 7 | 复制 APK 到 `apks/app-formal-latest.apk` 或 `apks/app-beta-latest.apk` |
+| 8 | Git add + commit + push（只推代码，APK 在 .gitignore） |
+| 9 | SCP 上传 APK 到服务器 |
+| 10 | SSH 服务器 `git pull && docker compose restart` |
+| 11 | 健康检查验证 |
 
-**Beta 版不需要更新 README.md**（保持简洁）。
+### 第四步：提醒注意事项
 
-> 注意：脚本本身不会自动更新 README，发布完成后需要手动补上，或者在发布前先改好 README 再发布。
-
-### 第五步：验证
-
-发布完成后：
-1. 调用健康检查接口验证服务正常：`https://qing6340.duckdns.org/api/health`
-2. 调用版本接口验证版本号正确：`https://qing6340.duckdns.org/api/version`
-3. 展示发布结果
-
-### 第六步：输出报告
-
-```
-✅ 发布成功！
-
-  版本：v1.1.0-beta.1（Beta 版）
-  APK：xx.x MB
-  日期：2026-08-26
-
-  测试地址：https://qing6340.duckdns.org
-  健康检查：正常
-
-  更新内容：
-  - ...
-  - ...
-```
+- 运行前确保 SSH 免密登录可用
+- 运行前确保 git 工作区干净（没有未提交的改动）
+- 脚本会自动 clean 旧构建，所以第一次构建会慢一点（约 2-3 分钟）
+- 如果构建失败，脚本会立即中止，不会继续部署
 
 ## 注意事项
 
-- **语言**：始终用中文，包括 changelog 内容（脚本传入的 `-Changelog` 参数必须是中文）
+- **语言**：始终用中文，包括 changelog 内容
 - **安全**：不要在输出中暴露密码、密钥等敏感信息
-- **确认**：执行发布前必须让用户确认，不能擅自发布
-- **回滚**：如果发布失败，提示用户可以 `git revert` 回滚
+- **只生成指令**：当前模式下只生成 PowerShell 命令，不直接执行
 - **README 更新**：正式版发布后提醒用户要不要顺便更新 README 版本历史
-- **服务器**：确保 SSH 免密登录可用，docker 命令无需 sudo
-- **通道机制**：通道由 APK 中的 `meta name="app-channel"` 标签决定，不再通过 localStorage 手动切换。用户切换版本通过下载安装另一个 APK 实现
-- **Capacitor 插件**：settings.html 中通过 `Capacitor.registerPlugin('Filesystem')` 和 `Capacitor.registerPlugin('FileOpener')` 注册插件，同时有 `Capacitor.Plugins` 回退机制。插件未就绪时自动回退到 `window.open` 浏览器下载
-- **APK 管理**：服务器上只保留 `app-beta-latest.apk` 和 `app-release.apk`，每次发布覆盖旧文件，不保留历史版本
-- **版本比较**：服务端 `compare_versions` 已支持 beta 版本号（如 `1.1.0-beta.1`），正确处理 `-beta.N` 后缀
-- **脚本编码**：PowerShell 脚本中的 Write-Host 用英文避免中文乱码，changelog 内容通过参数传入不受影响
+- **配置集中**：版本号和通道只在 `app/js/config.js` 管理，发布脚本只改这一个文件
+- **构建验证**：脚本构建后会解压 APK 检查 config.js 中的版本号，不匹配直接中止
+- **导出功能**：导出采用四重回退（Filesystem+FileOpener → Web Share → 剪贴板 → 浏览器下载）
+- **APK 管理**：服务器上只保留 latest 文件，每次发布覆盖

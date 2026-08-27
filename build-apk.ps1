@@ -16,6 +16,14 @@ $ANDROID_DIR  = Join-Path $PROJECT_ROOT "android"
 $APK_OUTPUT   = Join-Path $ANDROID_DIR "app\build\outputs\apk\release\app-release.apk"
 $APK_DEST     = Join-Path $PROJECT_ROOT "apks\app-release.apk"
 
+# ===== Clean 旧构建 =====
+Write-Host ">>> Clean 旧构建缓存" -ForegroundColor Cyan
+$buildDir = Join-Path $ANDROID_DIR "app\build"
+if (Test-Path $buildDir) {
+  Remove-Item $buildDir -Recurse -Force
+  Write-Host "  已删除旧 build 目录" -ForegroundColor Green
+}
+
 Write-Host ">>> 同步 Web 资源" -ForegroundColor Cyan
 Set-Location $PROJECT_ROOT
 npx cap copy android
