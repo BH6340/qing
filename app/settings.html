@@ -534,24 +534,7 @@
 const APP_VERSION = '1.1.0-beta.2';
 let confirmCallback = null;
 
-const isNativeApp = window.Capacitor && (window.Capacitor.isNative === true || (window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android'));
-let FilesystemPlugin = null;
-let FileOpenerPlugin = null;
-
-if (isNativeApp) {
-  // Capacitor 8: registerPlugin 是推荐方式
-  if (typeof window.Capacitor.registerPlugin === 'function') {
-    try { FilesystemPlugin = window.Capacitor.registerPlugin('Filesystem'); } catch(e) {}
-    try { FileOpenerPlugin = window.Capacitor.registerPlugin('FileOpener'); } catch(e) {}
-  }
-  // Fallback: 直接从 Capacitor.Plugins 获取
-  if (!FilesystemPlugin && window.Capacitor.Plugins) {
-    FilesystemPlugin = window.Capacitor.Plugins.Filesystem || null;
-  }
-  if (!FileOpenerPlugin && window.Capacitor.Plugins) {
-    FileOpenerPlugin = window.Capacitor.Plugins.FileOpener || null;
-  }
-}
+const isNativeApp = window.Capacitor && (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() === 'android' : window.Capacitor.platform === 'android');
 
 const API_BASE = 'https://qing6340.duckdns.org';
 
@@ -589,7 +572,7 @@ function toggleSarcasm() {
   Store.toast(newValue ? '毒舌模式已开启' : '毒舌模式已关闭');
 }
 
-// ===== 数据导出（Filesystem 插件）=====
+// ===== 数据导出 =====
 
 function exportData() {
   const data = Store.exportData();
@@ -599,50 +582,7 @@ function exportData() {
   downloadJSON(data, filename, '数据已导出');
 }
 
-async function downloadJSON(jsonStr, filename, successMsg) {
-  // 调试信息
-  console.log('exportData: isNativeApp=' + isNativeApp, 'FS=' + !!FilesystemPlugin, 'FO=' + !!FileOpenerPlugin);
-
-  if (FilesystemPlugin) {
-    try {
-      const result = await FilesystemPlugin.writeFile({
-        path: filename,
-        data: jsonStr,
-        directory: 'EXTERNAL',
-        encoding: 'utf8'
-      });
-      console.log('exportData: writeFile OK, uri=' + result.uri);
-
-      let opened = false;
-      if (FileOpenerPlugin) {
-        try {
-          await FileOpenerPlugin.open({ filePath: result.uri, contentType: 'application/json' });
-          opened = true;
-        } catch(e) {
-          console.log('exportData: FileOpener failed:', e.message);
-        }
-      }
-
-      if (opened) {
-        Store.toast(successMsg || '数据已导出');
-      } else {
-        Store.toast('已保存：Android/data/com.bh6340.qing/files/' + filename);
-      }
-    } catch(e) {
-      console.log('exportData: writeFile failed:', e.message);
-      // Filesystem 失败，回退到浏览器下载
-      tryBrowserDownload(jsonStr, filename, successMsg);
-    }
-  } else {
-    // 无 Filesystem 插件，用浏览器下载
-    if (isNativeApp) {
-      Store.toast('提示：Filesystem 插件未加载，尝试浏览器下载...');
-    }
-    tryBrowserDownload(jsonStr, filename, successMsg);
-  }
-}
-
-function tryBrowserDownload(jsonStr, filename, successMsg) {
+function downloadJSON(jsonStr, filename, successMsg) {
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -745,43 +685,14 @@ async function exportThenDownload() {
   }
 }
 
-async function downloadOtherAPK() {
+function downloadOtherAPK() {
   closeBetaSwitch();
   const channel = Store.getChannel();
   const apkUrl = channel === 'beta'
     ? API_BASE + '/api/download/apk'
     : API_BASE + '/api/download/apk/beta';
-
-  if (!isNativeApp || !FilesystemPlugin || !FileOpenerPlugin) {
-    // 浏览器或插件未就绪：直接打开下载链接
-    window.open(apkUrl, '_blank');
-    Store.toast('已跳转浏览器下载');
-    return;
-  }
-
-  // 原生 APP：下载 APK 并触发安装
-  Store.toast('正在下载，请稍候...');
-  try {
-    const apkResp = await fetch(apkUrl);
-    const blob = await apkResp.blob();
-    const base64 = await blobToBase64(blob);
-
-    const writeResult = await FilesystemPlugin.writeFile({
-      path: 'qing-update.apk',
-      data: base64,
-      directory: 'CACHE',
-      recursive: true
-    });
-
-    await FileOpenerPlugin.open({
-      filePath: writeResult.uri,
-      contentType: 'application/vnd.android.package-archive'
-    });
-  } catch (err) {
-    console.log('downloadOtherAPK failed, fallback to browser:', err.message);
-    window.open(apkUrl, '_blank');
-    Store.toast('已跳转浏览器下载');
-  }
+  window.open(apkUrl, '_blank');
+  Store.toast('已跳转浏览器下载');
 }
 
 // ===== 版本更新 =====
@@ -842,7 +753,7 @@ function openVersionModal(hasUpdate, data) {
       });
     }
     downloadBtn.style.display = 'block';
-    downloadBtn.textContent = isNativeApp ? '下载安装' : '刷新更新';
+    downloadBtn.textContent = '下载安装';
   } else {
     changelogBox.style.display = 'none';
     downloadBtn.style.display = 'none';
@@ -852,29 +763,8 @@ function openVersionModal(hasUpdate, data) {
 }
 
 async function downloadAndUpdate() {
-  if (!isNativeApp) {
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage('clear-cache');
-    }
-    location.reload();
-    return;
-  }
-
   const downloadBtn = document.getElementById('downloadBtn');
-
-  // 插件未就绪：用浏览器下载
-  if (!FilesystemPlugin || !FileOpenerPlugin) {
-    const channel = Store.getChannel();
-    const apiUrl = API_BASE + '/api/version?current=' + APP_VERSION + '&channel=' + channel;
-    const resp = await fetch(apiUrl);
-    const data = await resp.json();
-    const apkUrl = API_BASE + (data.apk_url || '/api/download/apk');
-    window.open(apkUrl, '_blank');
-    Store.toast('已跳转浏览器下载');
-    return;
-  }
-
-  downloadBtn.textContent = '下载中...';
+  downloadBtn.textContent = '跳转下载中...';
   downloadBtn.disabled = true;
 
   try {
@@ -883,54 +773,13 @@ async function downloadAndUpdate() {
     const resp = await fetch(apiUrl);
     const data = await resp.json();
     const apkUrl = API_BASE + (data.apk_url || '/api/download/apk');
-
-    const apkResp = await fetch(apkUrl);
-    const blob = await apkResp.blob();
-    const base64 = await blobToBase64(blob);
-
-    const writeResult = await FilesystemPlugin.writeFile({
-      path: 'qing-update.apk',
-      data: base64,
-      directory: 'CACHE',
-      recursive: true
-    });
-
-    await FileOpenerPlugin.open({
-      filePath: writeResult.uri,
-      contentType: 'application/vnd.android.package-archive'
-    });
-
-    downloadBtn.textContent = '下载安装';
-    downloadBtn.disabled = false;
-  } catch (err) {
-    console.log('downloadAndUpdate failed, fallback to browser:', err.message);
-    // 回退到浏览器下载
-    try {
-      const channel = Store.getChannel();
-      const apiUrl = API_BASE + '/api/version?current=' + APP_VERSION + '&channel=' + channel;
-      const resp = await fetch(apiUrl);
-      const data = await resp.json();
-      const apkUrl = API_BASE + (data.apk_url || '/api/download/apk');
-      window.open(apkUrl, '_blank');
-      Store.toast('已跳转浏览器下载');
-    } catch(e2) {
-      Store.toast('下载失败，请重试');
-    }
-    downloadBtn.textContent = '下载安装';
-    downloadBtn.disabled = false;
-    downloadBtn.disabled = false;
+    window.open(apkUrl, '_blank');
+    Store.toast('已跳转浏览器下载');
+  } catch(e) {
+    Store.toast('下载失败，请重试');
   }
-}
-
-function blobToBase64(blob) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result;
-      resolve(result.split(',')[1]);
-    };
-    reader.readAsDataURL(blob);
-  });
+  downloadBtn.textContent = '下载安装';
+  downloadBtn.disabled = false;
 }
 
 function closeVersionModal() {
