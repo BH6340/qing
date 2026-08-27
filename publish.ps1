@@ -40,6 +40,18 @@ $configContent = $configContent -replace "channel: '[^']+',", "channel: 'formal'
 Set-Content $configPath $configContent -NoNewline -Encoding UTF8
 Write-Host "  version -> $Version" -ForegroundColor Green
 Write-Host "  channel -> formal" -ForegroundColor Green
+
+# Update app-channel meta in all HTML files
+$htmlFiles = @('index.html', 'settings.html', 'todo.html', 'detail.html')
+foreach ($f in $htmlFiles) {
+  $htmlPath = "$projectDir\app\$f"
+  if (Test-Path $htmlPath) {
+    $htmlContent = Get-Content $htmlPath -Raw -Encoding UTF8
+    $htmlContent = $htmlContent -replace 'name="app-channel" content="[^"]*"', 'name="app-channel" content="formal"'
+    Set-Content $htmlPath $htmlContent -NoNewline -Encoding UTF8
+  }
+}
+Write-Host "  HTML meta channel -> formal" -ForegroundColor Green
 Write-Host ""
 
 # ===== 2. Update backend version info =====
@@ -91,7 +103,23 @@ if (Test-Path $buildDir) {
     Write-Host "  Will continue with build (Gradle will overwrite changed files)" -ForegroundColor Yellow
   }
 }
+# Also clean assets/public to ensure fresh copy
+$assetsDir = "$projectDir\android\app\src\main\assets\public"
+if (Test-Path $assetsDir) {
+  try {
+    Remove-Item $assetsDir -Recurse -Force -ErrorAction Stop
+    Write-Host "  Cleaned old assets/public directory" -ForegroundColor Green
+  } catch {
+    Write-Host "  WARNING: Could not clean assets dir: $($_.Exception.Message)" -ForegroundColor Yellow
+  }
+}
+$ErrorActionPreference = "Continue"
 npx cap copy android 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "  Capacitor copy FAILED" -ForegroundColor Red
+  exit 1
+}
+$ErrorActionPreference = "Stop"
 Write-Host "  Capacitor synced" -ForegroundColor Green
 Pop-Location
 Write-Host ""
@@ -99,7 +127,7 @@ Write-Host ""
 # ===== 4. Build APK =====
 Write-Host "[4/8] Build APK..." -ForegroundColor Cyan
 Push-Location "$projectDir\android"
-& $gradleExe assembleRelease --offline 2>&1 | ForEach-Object {
+& $gradleExe assembleRelease 2>&1 | ForEach-Object {
   $line = $_.ToString()
   if ($line -match "BUILD|FAIL|error:") { Write-Host "  $line" }
 }
@@ -158,7 +186,7 @@ Write-Host ""
 Write-Host "[7/8] Git push & deploy to server..." -ForegroundColor Cyan
 Push-Location $projectDir
 $ErrorActionPreference = "Continue"
-git add .gitignore app/ server/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
+git add .gitignore package.json package-lock.json app/ server/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
 git commit -m "v${Version}: $($changeLines[0])" 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"

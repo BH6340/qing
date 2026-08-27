@@ -71,6 +71,18 @@ $configContent = $configContent -replace "channel: '[^']+',", "channel: 'beta',"
 Set-Content $configPath $configContent -NoNewline -Encoding UTF8
 Write-Host "  version -> $Version" -ForegroundColor Green
 Write-Host "  channel -> beta" -ForegroundColor Green
+
+# Update app-channel meta in all HTML files
+$htmlFiles = @('index.html', 'settings.html', 'todo.html', 'detail.html')
+foreach ($f in $htmlFiles) {
+  $htmlPath = "$projectDir\app\$f"
+  if (Test-Path $htmlPath) {
+    $htmlContent = Get-Content $htmlPath -Raw -Encoding UTF8
+    $htmlContent = $htmlContent -replace 'name="app-channel" content="[^"]*"', 'name="app-channel" content="beta"'
+    Set-Content $htmlPath $htmlContent -NoNewline -Encoding UTF8
+  }
+}
+Write-Host "  HTML meta channel -> beta" -ForegroundColor Green
 Write-Host ""
 
 # ===== 3. Clean old build & Sync Capacitor =====
@@ -90,7 +102,23 @@ if (Test-Path $buildDir) {
     Write-Host "  Will continue with build (Gradle will overwrite changed files)" -ForegroundColor Yellow
   }
 }
+# Also clean assets/public to ensure fresh copy
+$assetsDir = "$projectDir\android\app\src\main\assets\public"
+if (Test-Path $assetsDir) {
+  try {
+    Remove-Item $assetsDir -Recurse -Force -ErrorAction Stop
+    Write-Host "  Cleaned old assets/public directory" -ForegroundColor Green
+  } catch {
+    Write-Host "  WARNING: Could not clean assets dir: $($_.Exception.Message)" -ForegroundColor Yellow
+  }
+}
+$ErrorActionPreference = "Continue"
 npx cap copy android 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "  Capacitor copy FAILED" -ForegroundColor Red
+  exit 1
+}
+$ErrorActionPreference = "Stop"
 Write-Host "  Capacitor synced" -ForegroundColor Green
 Pop-Location
 Write-Host ""
@@ -98,7 +126,7 @@ Write-Host ""
 # ===== 4. Build APK =====
 Write-Host "[4/7] Build Beta APK..." -ForegroundColor Cyan
 Push-Location "$projectDir\android"
-& $gradleExe assembleRelease --offline 2>&1 | ForEach-Object {
+& $gradleExe assembleRelease 2>&1 | ForEach-Object {
   $line = $_.ToString()
   if ($line -match "BUILD|FAIL|error:") { Write-Host "  $line" }
 }
@@ -159,7 +187,7 @@ Write-Host "  -> apks\app-beta-latest.apk" -ForegroundColor Green
 # Git push (code only, APK is in .gitignore)
 Push-Location $projectDir
 $ErrorActionPreference = "Continue"
-git add .gitignore app/ server/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
+git add .gitignore package.json package-lock.json app/ server/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
 git commit -m "beta v${Version}: $($changeLines[0])" 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"

@@ -23,6 +23,12 @@ if (Test-Path $buildDir) {
   Remove-Item $buildDir -Recurse -Force
   Write-Host "  已删除旧 build 目录" -ForegroundColor Green
 }
+# Clean assets/public 确保全新复制
+$assetsDir = Join-Path $ANDROID_DIR "app\src\main\assets\public"
+if (Test-Path $assetsDir) {
+  Remove-Item $assetsDir -Recurse -Force
+  Write-Host "  已删除旧 assets/public 目录" -ForegroundColor Green
+}
 
 Write-Host ">>> 同步 Web 资源" -ForegroundColor Cyan
 Set-Location $PROJECT_ROOT
@@ -32,7 +38,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host "Capacitor copy 失败" -ForegroundColor R
 Write-Host ">>> 构建 Release APK" -ForegroundColor Cyan
 Set-Location $ANDROID_DIR
 $gradleExe = "C:\Users\Administrator\.gradle\wrapper\dists\gradle-8.14.3-all\cbf6zifq8xavouihta8md72jo\gradle-8.14.3\bin\gradle.bat"
-& $gradleExe assembleRelease --offline
+& $gradleExe assembleRelease
 if ($LASTEXITCODE -ne 0) { Write-Host "Gradle 构建失败" -ForegroundColor Red; exit 1 }
 
 Write-Host ">>> 复制到 apks 目录" -ForegroundColor Cyan
