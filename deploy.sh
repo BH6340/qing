@@ -1,6 +1,6 @@
 #!/bin/bash
 # 轻·日历 部署脚本
-# 用法: sudo ./deploy.sh
+# 用法: ./deploy.sh（需先将用户加入 docker 组）
 
 set -e
 
