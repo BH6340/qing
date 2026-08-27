@@ -1,6 +1,6 @@
 /* 轻 · 日历 Service Worker */
 
-const CACHE_NAME = 'qing-cache-v4';
+const CACHE_NAME = 'qing-cache-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './settings.html',
   './css/style.css',
   './js/storage.js',
+  './js/config.js',
   './js/messages.js',
   './manifest.json',
 ];

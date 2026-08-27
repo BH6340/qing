@@ -1448,7 +1448,14 @@ window.addEventListener('load', function() {
 });
 
 // Register Service Worker (PWA only, not in Capacitor APP)
-if ('serviceWorker' in navigator && !(window.Capacitor && window.Capacitor.isNative)) {
+function _isNativeApp() {
+  if (window.Capacitor && window.Capacitor.getPlatform) {
+    var p = window.Capacitor.getPlatform();
+    return p === 'android' || p === 'ios';
+  }
+  return false;
+}
+if ('serviceWorker' in navigator && !_isNativeApp()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });

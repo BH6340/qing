@@ -37,13 +37,13 @@ LATEST_VERSION = {
 
 # === LATEST_BETA_VERSION_START ===
 LATEST_BETA_VERSION = {
-    "version": "1.1.0-beta.4",
+    "version": "1.1.0-beta.5",
     "release_date": "2026-08-27",
     "changelog": [
-        "新增后端导出接口，数据导出改为浏览器下载",
-        "清除HTML中所有硬编码版本号，全部从config.js动态读取",
-        "修复发布脚本中gradle和ssh的stderr误报问题",
-        "修复clean构建时Gradle Daemon文件占用的问题"
+        "修复Service Worker在APK环境下误注册导致缓存旧文件的问题",
+        "新增Browser插件，导出数据直接跳系统浏览器下载",
+        "发布脚本clean阶段新增删除assets/public确保资源全新同步",
+        "sw.js缓存版本升级到v5新增config.js缓存"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
