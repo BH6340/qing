@@ -582,7 +582,25 @@ function exportData() {
   downloadJSON(data, filename, '数据已导出');
 }
 
-function downloadJSON(jsonStr, filename, successMsg) {
+async function downloadJSON(jsonStr, filename, successMsg) {
+  // 原生APP：用 Filesystem 插件写到外部存储
+  const FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+  if (FS) {
+    try {
+      const result = await FS.writeFile({
+        path: filename,
+        data: jsonStr,
+        directory: 'Documents',
+        encoding: 'utf8',
+        recursive: true
+      });
+      Store.toast('已保存：文件管理/文档/' + filename);
+      return;
+    } catch (e) {
+      console.log('Filesystem 导出失败，回退浏览器下载:', e.message);
+    }
+  }
+  // 浏览器回退：a.download
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
