@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-channel" content="formal">
+<meta name="app-channel" content="beta">
 <meta name="theme-color" content="#f5f2ed">
 <title>轻 · 日历</title>
 <link rel="stylesheet" href="css/style.css">
@@ -240,13 +240,12 @@
     font-weight: 400;
   }
 
-  /* Card main stats row: weight+change | todo */
+  /* Card main stats row: weight | todo | checkin */
   .card-stats-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    padding-right: 50px;
+    gap: 12px;
     margin-bottom: 14px;
   }
   .card-weight-col {
@@ -258,6 +257,7 @@
     padding: 6px 4px;
     border-radius: 10px;
     transition: background 0.2s;
+    flex: 1;
   }
   .card-weight-col:active {
     background: var(--accent-bg);
@@ -314,23 +314,29 @@
     font-size: 14px;
   }
 
+  .card-right-cols {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
   .card-todo-col {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 6px 12px;
     border-radius: 10px;
     transition: background 0.2s;
     text-align: center;
+    min-width: 56px;
   }
   .card-todo-col:active {
     background: var(--accent-bg);
   }
   .todo-count {
     font-family: 'Noto Serif SC', serif;
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 600;
     color: var(--ink);
     line-height: 1.2;
@@ -338,14 +344,53 @@
   .todo-count .sep {
     color: var(--ink-mute);
     font-weight: 400;
-    font-size: 18px;
+    font-size: 14px;
   }
   .todo-count .total {
     color: var(--ink-mute);
     font-weight: 400;
-    font-size: 18px;
+    font-size: 14px;
   }
   .todo-label {
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .card-checkin-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 10px;
+    transition: background 0.2s;
+    text-align: center;
+    min-width: 56px;
+  }
+  .card-checkin-col:active {
+    background: var(--accent-bg);
+  }
+  .checkin-count {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .checkin-count .sep {
+    color: var(--ink-mute);
+    font-weight: 400;
+    font-size: 14px;
+  }
+  .checkin-count .total {
+    color: var(--ink-mute);
+    font-weight: 400;
+    font-size: 14px;
+  }
+  .checkin-label {
     font-size: 10px;
     color: var(--ink-mute);
     letter-spacing: 1px;
@@ -460,36 +505,43 @@
     box-shadow: 0 4px 12px rgba(196, 149, 106, 0.3);
     cursor: pointer;
   }
-  .empty-todo-row {
+  .empty-bottom-row {
     margin-top: 18px;
     padding-top: 16px;
     border-top: 1px solid var(--line);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    cursor: pointer;
+    gap: 16px;
   }
-  .empty-todo-row:active { opacity: 0.7; }
-  .empty-todo-count {
+  .empty-bottom-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+  .empty-bottom-item:active { background: var(--paper-deep); }
+  .empty-bottom-count {
     font-family: 'Noto Serif SC', serif;
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--ink);
+    line-height: 1.2;
   }
-  .empty-todo-count .total {
+  .empty-bottom-count .total {
     color: var(--ink-mute);
     font-weight: 400;
-    font-size: 13px;
+    font-size: 14px;
   }
-  .empty-todo-label {
-    font-size: 12px;
+  .empty-bottom-label {
+    font-size: 11px;
     color: var(--ink-mute);
     letter-spacing: 1px;
-  }
-  .empty-todo-arrow {
-    color: var(--accent);
-    font-size: 14px;
   }
 
   /* Weight modal - picker sections */
@@ -627,9 +679,15 @@
           </div>
           <div class="card-weight-label">体 重</div>
         </div>
-        <div class="card-todo-col" id="cardTodoCol" onclick="event.stopPropagation(); goToTodo();">
-          <div class="todo-count"><span id="todoDone">0</span><span class="sep">/</span><span class="total" id="todoTotal">0</span></div>
-          <div class="todo-label">待 办</div>
+        <div class="card-right-cols">
+          <div class="card-todo-col" id="cardTodoCol" onclick="event.stopPropagation(); goToTodos();">
+            <div class="todo-count"><span id="todoPending">0</span></div>
+            <div class="todo-label">待 办</div>
+          </div>
+          <div class="card-checkin-col" id="cardCheckinCol" onclick="event.stopPropagation(); goToTodo();">
+            <div class="checkin-count"><span id="checkinDone">0</span><span class="sep">/</span><span class="total" id="checkinTotal">0</span></div>
+            <div class="checkin-label">打 卡</div>
+          </div>
         </div>
       </div>
       <div class="card-message" id="cardMessage">
@@ -649,10 +707,15 @@
       <div class="empty-title">今日待称重</div>
       <div class="empty-desc" id="emptyDesc">早起空腹称一称<br>坚持记录，才能看见变化</div>
       <div class="empty-btn" onclick="event.stopPropagation(); openModal();">＋ 立即记录</div>
-      <div class="empty-todo-row" onclick="event.stopPropagation(); goToTodo();">
-        <div class="empty-todo-count"><span id="emptyTodoDone">0</span><span class="total">/<span id="emptyTodoTotal">0</span></span></div>
-        <div class="empty-todo-label">待办任务</div>
-        <div class="empty-todo-arrow">→</div>
+      <div class="empty-bottom-row">
+        <div class="empty-bottom-item" onclick="event.stopPropagation(); goToTodos();">
+          <div class="empty-bottom-count"><span id="emptyTodoPending">0</span></div>
+          <div class="empty-bottom-label">待 办</div>
+        </div>
+        <div class="empty-bottom-item" onclick="event.stopPropagation(); goToTodo();">
+          <div class="empty-bottom-count"><span id="emptyCheckinDone">0</span><span class="total">/<span id="emptyCheckinTotal">0</span></span></div>
+          <div class="empty-bottom-label">打 卡</div>
+        </div>
       </div>
     </div>
 
@@ -984,7 +1047,8 @@ function initSwipe() {
 function updateBottomCard() {
   const key = `${currentYear}-${currentMonth}-${selectedDate}`;
   const weightData = Store.getWeight(key);
-  const tasks = Store.getTasks(key);
+  const checkins = Store.getCheckins(key);
+  const todos = Store.getTodos();
   const card = document.getElementById('bottomCard');
   const contentEl = document.getElementById('cardContent');
   const emptyEl = document.getElementById('cardEmpty');
@@ -1020,11 +1084,13 @@ function updateBottomCard() {
     emptyEl.style.display = 'block';
     document.getElementById('emptyReminder').textContent = Messages.getWeightReminder();
 
-    // Todo overview in empty state
-    const doneCount = tasks.filter(t => t.completed).length;
-    const totalCount = tasks.length;
-    document.getElementById('emptyTodoDone').textContent = doneCount;
-    document.getElementById('emptyTodoTotal').textContent = totalCount;
+    // Checkin & todo overview in empty state
+    const checkinDone = checkins.filter(t => t.completed).length;
+    const checkinTotal = checkins.length;
+    const todoPending = todos.filter(t => !t.completed).length;
+    document.getElementById('emptyCheckinDone').textContent = checkinDone;
+    document.getElementById('emptyCheckinTotal').textContent = checkinTotal;
+    document.getElementById('emptyTodoPending').textContent = todoPending;
     return;
   }
 
@@ -1079,11 +1145,13 @@ function updateBottomCard() {
     msgEl.textContent = '这一天没有记录体重，点击体重区域补录一个吧。';
   }
 
-  // Todo overview
-  const doneCount = tasks.filter(t => t.completed).length;
-  const totalCount = tasks.length;
-  document.getElementById('todoDone').textContent = doneCount;
-  document.getElementById('todoTotal').textContent = totalCount;
+  // Checkin & todo overview
+  const checkinDone = checkins.filter(t => t.completed).length;
+  const checkinTotal = checkins.length;
+  const todoPending = todos.filter(t => !t.completed).length;
+  document.getElementById('checkinDone').textContent = checkinDone;
+  document.getElementById('checkinTotal').textContent = checkinTotal;
+  document.getElementById('todoPending').textContent = todoPending;
 }
 
 function onBottomCardClick() {
@@ -1110,6 +1178,11 @@ function onBottomCardClick() {
 function goToTodo() {
   saveState();
   location.href = `todo.html?date=${currentYear}-${currentMonth}-${selectedDate}&from=index`;
+}
+
+function goToTodos() {
+  saveState();
+  location.href = `todos.html?from=index`;
 }
 
 // ===== Weight Picker =====

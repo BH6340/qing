@@ -4,9 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-channel" content="formal">
+<meta name="app-channel" content="beta">
 <meta name="theme-color" content="#f5f2ed">
-<title>待办 · 轻日历</title>
+<title>今日打卡 · 轻日历</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
   /* Todo page specific styles */
@@ -184,6 +184,53 @@
     border-color: var(--success);
   }
   .todo-item.completed .checkbox svg { opacity: 1; }
+
+  /* 过去日期未完成样式 */
+  .todo-item.past-missed .checkbox {
+    border-color: var(--down);
+    color: var(--down);
+    background: transparent;
+  }
+  .todo-item.past-missed .checkbox svg {
+    opacity: 1;
+    stroke: var(--down);
+  }
+  .todo-item.past-missed .todo-text {
+    color: var(--ink-mute);
+  }
+
+  /* 确认弹窗 */
+  .modal-confirm {
+    padding: 24px 20px 20px;
+  }
+  .confirm-msg {
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.6;
+    padding: 16px 0 24px;
+    text-align: center;
+  }
+  .confirm-buttons {
+    display: flex;
+    gap: 12px;
+  }
+  .confirm-buttons button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-cancel {
+    background: var(--paper-deep);
+    color: var(--ink-mute);
+  }
+  .btn-confirm {
+    background: var(--accent);
+    color: white;
+  }
 
   .todo-text {
     flex: 1;
@@ -643,7 +690,7 @@
 
   <!-- Quick add -->
   <div class="quick-add">
-    <input type="text" id="taskInput" placeholder="快速添加任务..." maxlength="50">
+    <input type="text" id="taskInput" placeholder="快速添加打卡项..." maxlength="50">
     <div class="quick-add-btn" onclick="quickAdd()">
       <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
     </div>
@@ -652,13 +699,13 @@
   <!-- Pending tasks -->
   <div class="task-section">
     <div class="task-section-title">
-      待完成
+      待打卡
       <span class="badge" id="pendingBadge">0</span>
     </div>
     <div class="todo-list" id="pendingList">
       <div class="empty-tasks">
         <div class="emoji">✨</div>
-        还没有待办任务<br>快速添加，或从常用任务中选择
+        还没有打卡项<br>快速添加，或从常用打卡中选择
       </div>
     </div>
   </div>
@@ -677,7 +724,7 @@
     <div class="todo-list" id="doneList">
       <div class="empty-tasks" style="padding: 20px;">
         <div class="emoji" style="font-size:24px;">🌱</div>
-        完成的任务会出现在这里
+        完成的打卡会出现在这里
       </div>
     </div>
   </div>
@@ -691,7 +738,7 @@
   <div class="common-drawer-handle"></div>
   <div class="common-drawer-header" id="drawerHeader">
     <div>
-      <div class="title">常用任务</div>
+      <div class="title">常用打卡</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <span class="hint" id="drawerHint">多选 · 按点击顺序添加</span>
@@ -701,19 +748,19 @@
   <div class="common-drawer-body">
     <!-- Add task input row (edit mode only) -->
     <div class="add-task-row" id="addTaskRow" style="display: none;">
-      <input type="text" id="newTaskInput" placeholder="输入常用任务名称..." maxlength="30">
+      <input type="text" id="newTaskInput" placeholder="输入常用打卡名称..." maxlength="30">
       <button onclick="addNewCommonTask()">添加</button>
     </div>
     <div class="common-tasks-grid" id="commonTasks"></div>
     <div class="common-empty" id="commonEmpty" style="display:none;">
       <div class="emoji">📝</div>
-      还没有常用任务<br>
-      点击上方输入框添加你的常用任务 →
+      还没有常用打卡<br>
+      点击上方输入框添加你的常用打卡 →
     </div>
   </div>
   <div class="common-drawer-footer">
     <div class="footer-row">
-      <div class="info">已选 <strong id="selectedCount">0</strong> 个任务</div>
+      <div class="info">已选 <strong id="selectedCount">0</strong> 个打卡项</div>
       <button class="add-btn" id="addSelectedBtn" onclick="addSelectedTasks()" disabled>添加到今日</button>
     </div>
   </div>
@@ -724,7 +771,7 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">修改完成时间</div>
-    <div class="modal-subtitle" id="timeModalTask">任务名称</div>
+    <div class="modal-subtitle" id="timeModalTask">打卡项</div>
 
     <div class="picker-section modal-picker">
       <div class="picker-section-title">完成时间</div>
@@ -742,6 +789,19 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeTimeModal()">取消</button>
       <button class="btn btn-primary" onclick="saveTimeModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Past date confirm modal -->
+<div class="modal-overlay" id="pastConfirmModal">
+  <div class="modal-sheet modal-confirm">
+    <div class="modal-handle"></div>
+    <div class="modal-title">提醒</div>
+    <div class="confirm-msg" id="pastConfirmMsg"></div>
+    <div class="confirm-buttons">
+      <button class="btn-cancel" onclick="closePastConfirm()">取消</button>
+      <button class="btn-confirm" onclick="confirmPastAction()">确定</button>
     </div>
   </div>
 </div>
@@ -846,15 +906,15 @@ function goBack() {
 
 // ===== Data =====
 function loadData() {
-  const tasks = Store.getTasks(currentDate);
+  const tasks = Store.getCheckins(currentDate);
   pendingTasks = tasks.filter(t => !t.completed).sort((a, b) => a.order - b.order);
   completedTasks = tasks.filter(t => t.completed).sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || ''));
-  commonTasks = Store.getCommonTasks();
+  commonTasks = Store.getCommonCheckins();
 }
 
 function saveTasks() {
   const all = [...pendingTasks, ...completedTasks];
-  Store.setTasks(currentDate, all);
+  Store.setCheckins(currentDate, all);
 }
 
 // ===== Render =====
@@ -874,25 +934,32 @@ function renderPending() {
   if (pendingTasks.length === 0) {
     list.innerHTML = `<div class="empty-tasks">
       <div class="emoji">✨</div>
-      还没有待办任务<br>快速添加，或从常用任务中选择
+      还没有打卡项<br>快速添加，或从常用打卡中选择
     </div>`;
     return;
   }
 
+  const isPast = Store.isPast(currentDate);
+  const sarcasm = Store.getSettings().sarcasm;
+
   list.innerHTML = '';
   pendingTasks.forEach((task, index) => {
     const item = document.createElement('div');
-    item.className = 'todo-item';
-    item.draggable = true;
+    item.className = 'todo-item' + (isPast ? ' past-missed' : '');
+    item.draggable = !isPast;
     item.dataset.id = task.id;
     item.dataset.index = index;
+
+    const checkIcon = isPast
+      ? '<line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>'
+      : '<polyline points="20 6 9 17 4 12"></polyline>';
 
     item.innerHTML = `
       <div class="drag-handle">
         <span></span><span></span><span></span>
       </div>
       <div class="checkbox">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <svg viewBox="0 0 24 24">${checkIcon}</svg>
       </div>
       <div class="todo-text">${escapeHtml(task.text)}</div>
       <div class="delete-btn">
@@ -904,32 +971,57 @@ function renderPending() {
     `;
 
     // Complete
-    item.querySelector('.checkbox').addEventListener('click', () => completeTask(task.id));
+    item.querySelector('.checkbox').addEventListener('click', () => {
+      if (isPast) {
+        showPastConfirm(
+          sarcasm ? '哟，现在才想起打卡？早干嘛去了？补卡有意思吗？' : '今天已过，确认要补打卡吗？',
+          () => completeTask(task.id)
+        );
+      } else {
+        completeTask(task.id);
+      }
+    });
 
     // Edit text
     item.querySelector('.todo-text').addEventListener('click', (e) => {
       e.stopPropagation();
-      startEditTask(item, task, 'pending');
+      if (isPast) {
+        showPastConfirm(
+          sarcasm ? '改来改去，骗自己好玩吗？过去的就是过去了。' : '今天已过，确认要修改吗？',
+          () => startEditTask(item, task, 'pending')
+        );
+      } else {
+        startEditTask(item, task, 'pending');
+      }
     });
 
     // Delete
     item.querySelector('.delete-btn').addEventListener('click', (e) => {
       e.stopPropagation();
-      deleteTask(task.id);
+      if (isPast) {
+        showPastConfirm(
+          sarcasm ? '逃避是吧？假装没发生过是吧？删了就不算数了？' : '今天已过，确认要删除吗？',
+          () => deleteTask(task.id)
+        );
+      } else {
+        deleteTask(task.id);
+      }
     });
 
-    // Drag (HTML5 for desktop)
-    item.addEventListener('dragstart', handleDragStart);
-    item.addEventListener('dragover', handleDragOver);
-    item.addEventListener('drop', handleDrop);
-    item.addEventListener('dragend', handleDragEnd);
+    // Drag (HTML5 for desktop) - 过去日期不可拖拽
+    if (!isPast) {
+      item.addEventListener('dragstart', handleDragStart);
+      item.addEventListener('dragover', handleDragOver);
+      item.addEventListener('drop', handleDrop);
+      item.addEventListener('dragend', handleDragEnd);
 
-    // Touch drag on handle
-    const handle = item.querySelector('.drag-handle');
-    handle.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startTouchDrag(e, task.id, index, 'pending', item);
-    }, { passive: false });
+      // Touch drag on handle
+      const handle = item.querySelector('.drag-handle');
+      handle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startTouchDrag(e, task.id, index, 'pending', item);
+      }, { passive: false });
+    }
 
     list.appendChild(item);
   });
@@ -1015,7 +1107,7 @@ function startEditTask(itemEl, task, listType) {
   function save() {
     const newText = input.value.trim();
     if (newText && newText !== task.text) {
-      Store.updateTask(currentDate, task.id, { text: newText });
+      Store.updateCheckin(currentDate, task.id, { text: newText });
       loadData();
       render();
     } else {
@@ -1058,28 +1150,42 @@ function quickAdd() {
   const text = input.value.trim();
   if (!text) return;
 
-  Store.addTask(currentDate, text);
-  input.value = '';
-  loadData();
-  render();
-  Store.toast('任务已添加');
+  const isPast = Store.isPast(currentDate);
+  const sarcasm = Store.getSettings().sarcasm;
+
+  function doAdd() {
+    Store.addCheckin(currentDate, text);
+    input.value = '';
+    loadData();
+    render();
+    Store.toast('打卡已添加');
+  }
+
+  if (isPast) {
+    showPastConfirm(
+      sarcasm ? '都过去了才加，马后炮有意思吗？早干嘛去了？' : '今天已过，确认还要添加吗？',
+      doAdd
+    );
+  } else {
+    doAdd();
+  }
 }
 
 function completeTask(id) {
-  Store.completeTask(currentDate, id);
+  Store.completeCheckin(currentDate, id);
   loadData();
   render();
   Store.toast(Messages.getTaskComplete());
 }
 
 function uncompleteTask(id) {
-  Store.uncompleteTask(currentDate, id);
+  Store.uncompleteCheckin(currentDate, id);
   loadData();
   render();
 }
 
 function deleteTask(id) {
-  Store.deleteTask(currentDate, id);
+  Store.deleteCheckin(currentDate, id);
   loadData();
   render();
   Store.toast('已删除');
@@ -1102,7 +1208,7 @@ function handleDrop(e) {
   const targetIndex = parseInt(e.currentTarget.dataset.index);
   if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
 
-  Store.reorderTasks(currentDate, dragSrcIndex, targetIndex);
+  Store.reorderCheckins(currentDate, dragSrcIndex, targetIndex);
   loadData();
   render();
 }
@@ -1189,7 +1295,7 @@ function startTouchDrag(e, taskId, srcIndex, listType, itemEl) {
     clearTimeout(touchDrag.longPressTimer);
 
     if (touchDrag.active && listType === 'pending' && touchDrag.overIndex !== null) {
-      Store.reorderTasks(currentDate, srcIndex, touchDrag.overIndex);
+      Store.reorderCheckins(currentDate, srcIndex, touchDrag.overIndex);
       loadData();
       render();
     }
@@ -1321,11 +1427,31 @@ function saveTimeModal() {
   const h = Math.max(0, Math.min(23, timePicker.hour));
   const m = Math.max(0, Math.min(59, timePicker.minute));
   const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-  Store.updateTask(currentDate, timePicker.taskId, { completedAt: timeStr });
+  Store.updateCheckin(currentDate, timePicker.taskId, { completedAt: timeStr });
   loadData();
   render();
   closeTimeModal();
   Store.toast('时间已修改');
+}
+
+// ===== 过去日期确认弹窗 =====
+let pastConfirmCallback = null;
+
+function showPastConfirm(msg, onConfirm) {
+  document.getElementById('pastConfirmMsg').textContent = msg;
+  pastConfirmCallback = onConfirm;
+  document.getElementById('pastConfirmModal').classList.add('active');
+}
+
+function closePastConfirm() {
+  document.getElementById('pastConfirmModal').classList.remove('active');
+  pastConfirmCallback = null;
+}
+
+function confirmPastAction() {
+  const cb = pastConfirmCallback;
+  closePastConfirm();
+  if (cb) cb();
 }
 
 // ===== Common Tasks =====
@@ -1450,12 +1576,12 @@ function updateDrawerFooter() {
 function addSelectedTasks() {
   if (selectedCommon.length === 0) return;
   const count = selectedCommon.length;
-  Store.addCommonTasksToDate(currentDate, selectedCommon);
+  Store.addCommonCheckinsToDate(currentDate, selectedCommon);
   selectedCommon = [];
   loadData();
   render();
   closeDrawer();
-  Store.toast(`已添加 ${count} 个任务`);
+  Store.toast(`已添加 ${count} 个打卡项`);
 }
 
 // ===== Edit Mode =====
@@ -1484,8 +1610,8 @@ function updateEditModeUI() {
 }
 
 function deleteCommonTask(id) {
-  Store.deleteCommonTask(id);
-  commonTasks = Store.getCommonTasks();
+  Store.deleteCommonCheckin(id);
+  commonTasks = Store.getCommonCheckins();
   renderCommonBar();
   renderCommonTasks();
   Store.toast('已删除');
@@ -1495,8 +1621,8 @@ function addNewCommonTask() {
   const input = document.getElementById('newTaskInput');
   const text = input.value.trim();
   if (!text) return;
-  Store.addCommonTask(text);
-  commonTasks = Store.getCommonTasks();
+  Store.addCommonCheckin(text);
+  commonTasks = Store.getCommonCheckins();
   renderCommonBar();
   renderCommonTasks();
   input.value = '';

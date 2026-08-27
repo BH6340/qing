@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="app-channel" content="formal">
+<meta name="app-channel" content="beta">
 <meta name="theme-color" content="#f5f2ed">
 <title>日笺 · 轻日历</title>
 <link rel="stylesheet" href="css/style.css">
@@ -648,7 +648,7 @@
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
         </svg>
       </div>
-      <h2>今日待办</h2>
+      <h2>今日打卡</h2>
       <span class="meta" id="tasksMeta">0 / 0</span>
     </div>
     <div class="tasks-summary">
@@ -669,7 +669,7 @@
       <div class="task-list-preview" id="taskPreview">
         <!-- Filled by JS -->
       </div>
-      <div class="view-detail-link" onclick="goToTodo()">查看完整任务列表 →</div>
+      <div class="view-detail-link" onclick="goToTodo()">查看完整打卡列表 →</div>
     </div>
   </div>
 
@@ -1126,9 +1126,9 @@ function saveMood() {
   Store.toast('心情已记录 ✓');
 }
 
-// ===== Tasks =====
+// ===== Tasks (Checkins) =====
 function renderTasks() {
-  const tasks = Store.getTasks(currentDate);
+  const tasks = Store.getCheckins(currentDate);
   const done = tasks.filter(t => t.completed);
   const pending = tasks.filter(t => !t.completed);
   const total = tasks.length;
@@ -1143,7 +1143,7 @@ function renderTasks() {
     preview.innerHTML = `
       <div class="task-preview-item undone">
         <span class="dot"></span>
-        <span class="text" style="color:var(--ink-mute);">还没有任务</span>
+        <span class="text" style="color:var(--ink-mute);">还没有打卡</span>
       </div>
     `;
     return;

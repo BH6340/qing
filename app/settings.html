@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f5f2ed">
-<meta name="app-channel" content="formal">
+<meta name="app-channel" content="beta">
 <title>设置 · 轻日历</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
@@ -101,7 +101,7 @@
   .setting-icon.green { background: #eef5f0; color: #5a9d7f; }
   .setting-icon.red { background: #fdf0f0; color: #d65a5a; }
   .setting-icon.purple { background: #f0eef5; color: #8a7bb0; }
-  .setting-icon.orange { background: #fef5eef; color: #d4830a; }
+  .setting-icon.orange { background: #fef5ee; color: #d4830a; }
   .setting-icon svg {
     width: 18px;
     height: 18px;
@@ -514,7 +514,7 @@
         </div>
         <div class="setting-content">
           <div class="setting-label">关于轻日历</div>
-          <div class="setting-desc">极简体重与待办记录工具</div>
+          <div class="setting-desc">极简体重、打卡与待办记录工具</div>
         </div>
         <div class="setting-arrow">
           <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -654,7 +654,7 @@
     </div>
 
     <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;text-align:center;padding: 0 12px 24px;">
-      一款极简的体重记录与待办工具。<br>
+      一款极简的体重、打卡与待办记录工具。<br>
       纸墨质感设计，低调又高级。<br>
       数据本地存储，隐私安全无忧。<br><br>
       愿你每天都比昨天更轻盈一点。
@@ -798,7 +798,7 @@ function handleImportFile(event) {
 }
 
 function confirmReset() {
-  showConfirm('清空所有数据', '此操作将删除所有体重记录、待办任务和日笺数据，且不可恢复。确定要继续吗？', () => {
+  showConfirm('清空所有数据', '此操作将删除所有体重记录、打卡、待办和日笺数据，且不可恢复。确定要继续吗？', () => {
     Store.resetAll();
     Store.toast('数据已清空');
     setTimeout(() => location.reload(), 1000);

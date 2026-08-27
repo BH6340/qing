@@ -52,8 +52,11 @@ const Store = (function() {
   // 默认数据结构
   const defaultData = {
     weights: {},        // { "2026-8-24": { value: 62.4, time: "09:00" } }
-    tasks: {},          // { "2026-8-24": [{ id, text, completed, completedAt, order }] }
-    commonTasks: [],      // 常用任务库（用户自定义）
+    tasks: {},          // 【旧字段，兼容保留】每日任务（旧版命名）
+    checkins: {},       // { "2026-8-24": [{ id, text, completed, completedAt, order }] } — 每日打卡
+    commonTasks: [],      // 【旧字段，兼容保留】常用任务库（旧版命名）
+    commonCheckins: [],   // 常用打卡库（用户自定义）
+    todos: [],          // [{ id, text, completed, completedAt, order, createdAt }] — 长期待办（全局共用）
     notes: {},         // { "2026-8-24": { text: "...", mood: "calm", time: "21:30" } }
     moods: {           // 心情选项
       calm: { emoji: '😌', name: '平静如水', desc: '没有大起大落，平平淡淡的一天。' },
@@ -67,10 +70,31 @@ const Store = (function() {
       sarcasm: true,     // 毒舌模式开关
       unit: 'kg',        // 体重单位
     },
-    version: '1.0.0',
+    version: '1.2.0',
   };
 
   let cache = null;
+
+  // 数据迁移：旧字段 → 新字段
+  function migrateData(data) {
+    let changed = false;
+    // tasks → checkins 迁移
+    if (data.tasks && Object.keys(data.tasks).length > 0 && (!data.checkins || Object.keys(data.checkins).length === 0)) {
+      data.checkins = JSON.parse(JSON.stringify(data.tasks));
+      changed = true;
+    }
+    // commonTasks → commonCheckins 迁移
+    if (data.commonTasks && data.commonTasks.length > 0 && (!data.commonCheckins || data.commonCheckins.length === 0)) {
+      data.commonCheckins = JSON.parse(JSON.stringify(data.commonTasks));
+      changed = true;
+    }
+    // 确保 todos 字段存在
+    if (!data.todos) {
+      data.todos = [];
+      changed = true;
+    }
+    return changed;
+  }
 
   // 加载数据
   function load() {
@@ -79,9 +103,12 @@ const Store = (function() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         cache = JSON.parse(raw);
+        // 数据迁移
+        const changed = migrateData(cache);
         // 兼容性处理：确保所有字段存在
         cache = Object.assign({}, defaultData, cache);
         cache.moods = defaultData.moods; // 心情选项始终用内置的
+        if (changed) save();
       } else {
         cache = JSON.parse(JSON.stringify(defaultData));
         save();
@@ -93,10 +120,13 @@ const Store = (function() {
     return cache;
   }
 
-  // 保存数据
+  // 保存数据（双写新旧字段，保证兼容旧版本导入）
   function save() {
     if (!cache) return;
     try {
+      // 双写：checkins → tasks 也同步写
+      if (cache.checkins) cache.tasks = JSON.parse(JSON.stringify(cache.checkins));
+      if (cache.commonCheckins) cache.commonTasks = JSON.parse(JSON.stringify(cache.commonCheckins));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
     } catch (e) {
       console.error('数据保存失败:', e);
@@ -150,123 +180,122 @@ const Store = (function() {
     return result;
   }
 
-  // ===== 任务相关 =====
-  function getTasks(dateStr) {
+  // ===== 打卡相关（每日） =====
+  function getCheckins(dateStr) {
     load();
-    return cache.tasks[dateStr] || [];
+    return cache.checkins[dateStr] || [];
   }
 
-  function setTasks(dateStr, tasks) {
+  function setCheckins(dateStr, checkins) {
     load();
-    cache.tasks[dateStr] = tasks;
+    cache.checkins[dateStr] = checkins;
     save();
   }
 
-  function addTask(dateStr, text) {
+  function addCheckin(dateStr, text) {
     load();
-    const tasks = cache.tasks[dateStr] || [];
-    const task = {
-      id: 't' + Date.now() + Math.random().toString(36).slice(2, 6),
+    const checkins = cache.checkins[dateStr] || [];
+    const item = {
+      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
       text,
       completed: false,
       completedAt: null,
-      order: tasks.length,
+      order: checkins.length,
     };
-    tasks.push(task);
-    cache.tasks[dateStr] = tasks;
+    checkins.push(item);
+    cache.checkins[dateStr] = checkins;
     save();
-    return task;
+    return item;
   }
 
-  function updateTask(dateStr, taskId, updates) {
+  function updateCheckin(dateStr, itemId, updates) {
     load();
-    const tasks = cache.tasks[dateStr] || [];
-    const index = tasks.findIndex(t => t.id === taskId);
+    const checkins = cache.checkins[dateStr] || [];
+    const index = checkins.findIndex(t => t.id === itemId);
     if (index !== -1) {
-      tasks[index] = { ...tasks[index], ...updates };
-      cache.tasks[dateStr] = tasks;
+      checkins[index] = { ...checkins[index], ...updates };
+      cache.checkins[dateStr] = checkins;
       save();
-      return tasks[index];
+      return checkins[index];
     }
     return null;
   }
 
-  function deleteTask(dateStr, taskId) {
+  function deleteCheckin(dateStr, itemId) {
     load();
-    const tasks = cache.tasks[dateStr] || [];
-    cache.tasks[dateStr] = tasks.filter(t => t.id !== taskId);
+    const checkins = cache.checkins[dateStr] || [];
+    cache.checkins[dateStr] = checkins.filter(t => t.id !== itemId);
     save();
   }
 
-  function completeTask(dateStr, taskId) {
+  function completeCheckin(dateStr, itemId) {
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    return updateTask(dateStr, taskId, { completed: true, completedAt: time });
+    return updateCheckin(dateStr, itemId, { completed: true, completedAt: time });
   }
 
-  function uncompleteTask(dateStr, taskId) {
-    return updateTask(dateStr, taskId, { completed: false, completedAt: null });
+  function uncompleteCheckin(dateStr, itemId) {
+    return updateCheckin(dateStr, itemId, { completed: false, completedAt: null });
   }
 
-  function reorderTasks(dateStr, fromIndex, toIndex) {
+  function reorderCheckins(dateStr, fromIndex, toIndex) {
     load();
-    const tasks = cache.tasks[dateStr] || [];
-    if (fromIndex < 0 || fromIndex >= tasks.length) return;
-    if (toIndex < 0 || toIndex >= tasks.length) return;
-    const [moved] = tasks.splice(fromIndex, 1);
-    tasks.splice(toIndex, 0, moved);
-    // 更新 order
-    tasks.forEach((t, i) => t.order = i);
-    cache.tasks[dateStr] = tasks;
+    const checkins = cache.checkins[dateStr] || [];
+    if (fromIndex < 0 || fromIndex >= checkins.length) return;
+    if (toIndex < 0 || toIndex >= checkins.length) return;
+    const [moved] = checkins.splice(fromIndex, 1);
+    checkins.splice(toIndex, 0, moved);
+    checkins.forEach((t, i) => t.order = i);
+    cache.checkins[dateStr] = checkins;
     save();
   }
 
-  // ===== 常用任务 =====
-  function getCommonTasks() {
+  // ===== 常用打卡 =====
+  function getCommonCheckins() {
     load();
-    return [...cache.commonTasks].sort((a, b) => a.order - b.order);
+    return [...cache.commonCheckins].sort((a, b) => a.order - b.order);
   }
 
-  function addCommonTask(text) {
+  function addCommonCheckin(text) {
     load();
-    const task = {
-      id: 'c' + Date.now(),
+    const item = {
+      id: 'cc' + Date.now(),
       text,
-      order: cache.commonTasks.length,
+      order: cache.commonCheckins.length,
     };
-    cache.commonTasks.push(task);
+    cache.commonCheckins.push(item);
     save();
-    return task;
+    return item;
   }
 
-  function deleteCommonTask(id) {
+  function deleteCommonCheckin(id) {
     load();
-    cache.commonTasks = cache.commonTasks.filter(t => t.id !== id);
-    cache.commonTasks.forEach((t, i) => t.order = i);
-    save();
-  }
-
-  function reorderCommonTasks(fromIndex, toIndex) {
-    load();
-    const tasks = cache.commonTasks;
-    if (fromIndex < 0 || fromIndex >= tasks.length) return;
-    if (toIndex < 0 || toIndex >= tasks.length) return;
-    const [moved] = tasks.splice(fromIndex, 1);
-    tasks.splice(toIndex, 0, moved);
-    tasks.forEach((t, i) => t.order = i);
+    cache.commonCheckins = cache.commonCheckins.filter(t => t.id !== id);
+    cache.commonCheckins.forEach((t, i) => t.order = i);
     save();
   }
 
-  // 批量添加常用任务到某日
-  function addCommonTasksToDate(dateStr, taskIds) {
+  function reorderCommonCheckins(fromIndex, toIndex) {
     load();
-    const tasks = cache.tasks[dateStr] || [];
-    let order = tasks.length;
-    taskIds.forEach(id => {
-      const common = cache.commonTasks.find(t => t.id === id);
+    const items = cache.commonCheckins;
+    if (fromIndex < 0 || fromIndex >= items.length) return;
+    if (toIndex < 0 || toIndex >= items.length) return;
+    const [moved] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, moved);
+    items.forEach((t, i) => t.order = i);
+    save();
+  }
+
+  // 批量添加常用打卡到某日
+  function addCommonCheckinsToDate(dateStr, itemIds) {
+    load();
+    const checkins = cache.checkins[dateStr] || [];
+    let order = checkins.length;
+    itemIds.forEach(id => {
+      const common = cache.commonCheckins.find(t => t.id === id);
       if (common) {
-        tasks.push({
-          id: 't' + Date.now() + Math.random().toString(36).slice(2, 6),
+        checkins.push({
+          id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6),
           text: common.text,
           completed: false,
           completedAt: null,
@@ -274,9 +303,84 @@ const Store = (function() {
         });
       }
     });
-    cache.tasks[dateStr] = tasks;
+    cache.checkins[dateStr] = checkins;
     save();
   }
+
+  // ===== 待办事项（长期，全局共用） =====
+  function getTodos() {
+    load();
+    return [...cache.todos].sort((a, b) => a.order - b.order);
+  }
+
+  function addTodo(text) {
+    load();
+    const item = {
+      id: 'td' + Date.now() + Math.random().toString(36).slice(2, 6),
+      text,
+      completed: false,
+      completedAt: null,
+      order: cache.todos.length,
+      createdAt: dateKey(new Date()),
+    };
+    cache.todos.push(item);
+    save();
+    return item;
+  }
+
+  function updateTodo(itemId, updates) {
+    load();
+    const index = cache.todos.findIndex(t => t.id === itemId);
+    if (index !== -1) {
+      cache.todos[index] = { ...cache.todos[index], ...updates };
+      save();
+      return cache.todos[index];
+    }
+    return null;
+  }
+
+  function deleteTodo(itemId) {
+    load();
+    cache.todos = cache.todos.filter(t => t.id !== itemId);
+    cache.todos.forEach((t, i) => t.order = i);
+    save();
+  }
+
+  function completeTodo(itemId) {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    return updateTodo(itemId, { completed: true, completedAt: time });
+  }
+
+  function uncompleteTodo(itemId) {
+    return updateTodo(itemId, { completed: false, completedAt: null });
+  }
+
+  function reorderTodos(fromIndex, toIndex) {
+    load();
+    const todos = cache.todos;
+    if (fromIndex < 0 || fromIndex >= todos.length) return;
+    if (toIndex < 0 || toIndex >= todos.length) return;
+    const [moved] = todos.splice(fromIndex, 1);
+    todos.splice(toIndex, 0, moved);
+    todos.forEach((t, i) => t.order = i);
+    save();
+  }
+
+  // ===== 兼容旧函数名（保留一段时间，避免旧代码报错） =====
+  function getTasks(dateStr) { return getCheckins(dateStr); }
+  function setTasks(dateStr, v) { return setCheckins(dateStr, v); }
+  function addTask(dateStr, text) { return addCheckin(dateStr, text); }
+  function updateTask(dateStr, id, u) { return updateCheckin(dateStr, id, u); }
+  function deleteTask(dateStr, id) { return deleteCheckin(dateStr, id); }
+  function completeTask(dateStr, id) { return completeCheckin(dateStr, id); }
+  function uncompleteTask(dateStr, id) { return uncompleteCheckin(dateStr, id); }
+  function reorderTasks(dateStr, f, t) { return reorderCheckins(dateStr, f, t); }
+  function getCommonTasks() { return getCommonCheckins(); }
+  function addCommonTask(text) { return addCommonCheckin(text); }
+  function deleteCommonTask(id) { return deleteCommonCheckin(id); }
+  function reorderCommonTasks(f, t) { return reorderCommonCheckins(f, t); }
+  function addCommonTasksToDate(dateStr, ids) { return addCommonCheckinsToDate(dateStr, ids); }
 
   // ===== 日笺/心情/随笔 =====
   function getNote(dateStr) {
@@ -444,12 +548,15 @@ const Store = (function() {
     getChannel, switchChannel, exportChannelData,
     // 体重
     getWeight, setWeight, deleteWeight, getPrevWeight, getMonthWeights,
-    // 任务
-    getTasks, setTasks, addTask, updateTask, deleteTask,
-    completeTask, uncompleteTask, reorderTasks,
-    // 常用任务
-    getCommonTasks, addCommonTask, deleteCommonTask,
-    reorderCommonTasks, addCommonTasksToDate,
+    // 打卡（每日）
+    getCheckins, setCheckins, addCheckin, updateCheckin, deleteCheckin,
+    completeCheckin, uncompleteCheckin, reorderCheckins,
+    // 常用打卡
+    getCommonCheckins, addCommonCheckin, deleteCommonCheckin,
+    reorderCommonCheckins, addCommonCheckinsToDate,
+    // 待办事项（长期）
+    getTodos, addTodo, updateTodo, deleteTodo,
+    completeTodo, uncompleteTodo, reorderTodos,
     // 日笺/心情
     getNote, setNote, deleteNote, getMoods,
     // 设置
@@ -458,5 +565,10 @@ const Store = (function() {
     exportData, importData,
     // 工具
     formatTime, getWeekday, isToday, isPast, uid, toast, getQueryParam,
+    // 兼容旧函数名
+    getTasks, setTasks, addTask, updateTask, deleteTask,
+    completeTask, uncompleteTask, reorderTasks,
+    getCommonTasks, addCommonTask, deleteCommonTask,
+    reorderCommonTasks, addCommonTasksToDate,
   };
 })();
