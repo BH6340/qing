@@ -222,7 +222,40 @@
 
   .version-detail {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+  }
+  .version-detail .ver-latest {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--accent-deep);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .version-detail .ver-latest-label {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+  .version-detail .ver-current {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink-mute);
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .version-detail .ver-current-label {
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 3px;
+  }
+  .version-detail .ver-divider {
+    width: 40px;
+    height: 1px;
+    background: var(--line);
+    margin: 14px auto;
   }
   .version-detail .ver-num {
     font-family: 'Noto Serif SC', serif;
@@ -249,6 +282,18 @@
     margin-bottom: 10px;
     color: var(--ink);
     letter-spacing: 1px;
+  }
+  .changelog .changelog-version {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent-deep);
+    background: var(--accent-bg);
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-left: 8px;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
   }
   .changelog ul {
     list-style: none;
@@ -279,6 +324,66 @@
     border-left: 3px solid #e8923a;
   }
   .beta-warn b { color: #c4701a; }
+
+  .export-choice {
+    background: var(--paper);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 20px;
+  }
+  .export-choice-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+    gap: 14px;
+  }
+  .export-choice-item:active { background: var(--card); }
+  .export-choice-item + .export-choice-item { margin-top: 2px; }
+  .export-choice-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent-deep);
+    background: var(--accent-bg);
+  }
+  .export-choice-icon.green { background: #eef5f0; color: #5a9d7f; }
+  .export-choice-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+  }
+  .export-choice-content { flex: 1; min-width: 0; }
+  .export-choice-title {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .export-choice-desc {
+    font-size: 11px;
+    color: var(--ink-mute);
+    line-height: 1.5;
+  }
+  .export-choice-arrow {
+    color: var(--ink-faint);
+    flex-shrink: 0;
+  }
+  .export-choice-arrow svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+  }
 
   .import-tip {
     text-align: center;
@@ -466,13 +571,16 @@
     <div class="modal-subtitle" id="versionSubtitle">当前已是最新版本</div>
 
     <div class="version-detail">
+      <div class="ver-latest" id="verLatest" style="display:none;">v--</div>
+      <div class="ver-latest-label" id="verLatestLabel" style="display:none;">最新版本</div>
+      <div class="ver-divider" id="verDivider" style="display:none;"></div>
       <div class="ver-num" id="verNum">v--</div>
-      <div class="ver-label">当前版本</div>
+      <div class="ver-label" id="verLabel">当前版本</div>
     </div>
 
     <div id="changelogBox" style="display:none;">
       <div class="changelog">
-        <h4>更新内容</h4>
+        <h4>更新内容<span class="changelog-version" id="changelogVersion"></span></h4>
         <ul id="changelogList"></ul>
       </div>
     </div>
@@ -495,12 +603,41 @@
       · 安装后看不到现有数据<br>
       · 建议先导出数据做备份
     </div>
+    <div class="export-choice">
+      <div class="export-choice-item" onclick="exportBackupFirst()">
+        <div class="export-choice-icon green">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </div>
+        <div class="export-choice-content">
+          <div class="export-choice-title">导出数据备份</div>
+          <div class="export-choice-desc">跳浏览器下载备份文件，安全升级</div>
+        </div>
+        <div class="export-choice-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </div>
+      <div class="export-choice-item" onclick="downloadOtherAPK()">
+        <div class="export-choice-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </div>
+        <div class="export-choice-content">
+          <div class="export-choice-title">已备份，直接下载</div>
+          <div class="export-choice-desc">数据保留在当前版本，直接安装新版</div>
+        </div>
+        <div class="export-choice-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeBetaSwitch()">取消</button>
-      <button class="btn btn-primary" id="betaSwitchExportBtn" onclick="exportThenDownload()">先导出数据，再下载</button>
-    </div>
-    <div style="text-align:center; margin-top:12px;">
-      <a href="javascript:void(0)" id="betaSwitchDirectBtn" onclick="downloadOtherAPK()" style="font-size:12px; color:var(--ink-mute); text-decoration:underline;">直接下载（数据保留在当前版本）</a>
     </div>
   </div>
 </div>
@@ -692,13 +829,9 @@ function betaSwitchChannel() {
   if (channel === 'beta') {
     document.getElementById('betaSwitchTitle').textContent = '切回正式版';
     document.getElementById('betaSwitchWarn').innerHTML = '<b>注意事项：</b><br>· 回到稳定版本，数据更安全<br>· Beta 版里的数据不会自动同步<br>· 安装正式版后看不到 Beta 数据<br>· 建议先导出 Beta 数据';
-    document.getElementById('betaSwitchExportBtn').textContent = '先导出数据，再下载';
-    document.getElementById('betaSwitchDirectBtn').textContent = '直接下载正式版（数据保留在 Beta）';
   } else {
     document.getElementById('betaSwitchTitle').textContent = '加入 Beta 测试';
     document.getElementById('betaSwitchWarn').innerHTML = '<b>注意事项：</b><br>· Beta 版可能有不稳定因素<br>· 数据与正式版相互独立<br>· 安装后看不到现有正式版数据<br>· 建议先导出数据做备份';
-    document.getElementById('betaSwitchExportBtn').textContent = '先导出数据，再下载';
-    document.getElementById('betaSwitchDirectBtn').textContent = '直接下载 Beta 版（数据保留在正式版）';
   }
   document.getElementById('betaSwitchModal').classList.add('active');
 }
@@ -707,7 +840,7 @@ function closeBetaSwitch() {
   document.getElementById('betaSwitchModal').classList.remove('active');
 }
 
-async function exportThenDownload() {
+function exportBackupFirst() {
   const data = Store.exportData();
   if (data) {
     const now = new Date();
@@ -715,15 +848,10 @@ async function exportThenDownload() {
     const channel = Store.getChannel();
     const channelLabel = channel === 'beta' ? 'beta' : 'formal';
     const filename = `qing-backup-${channelLabel}-${dateStr}.json`;
-    await downloadJSON(data, filename, '数据已导出');
-    setTimeout(() => {
-      closeBetaSwitch();
-      downloadOtherAPK();
-    }, 1500);
+    downloadJSON(data, filename, '已打开浏览器下载备份');
+    // 弹窗保留，用户导完可以回来点下载
   } else {
     Store.toast('无数据需要备份');
-    closeBetaSwitch();
-    downloadOtherAPK();
   }
 }
 
@@ -770,12 +898,22 @@ function checkUpdate() {
 function openVersionModal(hasUpdate, data) {
   document.getElementById('versionSubtitle').textContent = hasUpdate ? '有新版本可用' : '当前已是最新版本';
   document.getElementById('verNum').textContent = 'v' + APP_VERSION;
+  document.getElementById('verLabel').textContent = '当前版本';
 
+  const verLatest = document.getElementById('verLatest');
+  const verLatestLabel = document.getElementById('verLatestLabel');
+  const verDivider = document.getElementById('verDivider');
   const changelogBox = document.getElementById('changelogBox');
   const changelogList = document.getElementById('changelogList');
+  const changelogVersion = document.getElementById('changelogVersion');
   const downloadBtn = document.getElementById('downloadBtn');
 
   if (hasUpdate && data) {
+    verLatest.textContent = 'v' + data.latest_version;
+    verLatest.style.display = 'block';
+    verLatestLabel.style.display = 'block';
+    verDivider.style.display = 'block';
+    changelogVersion.textContent = 'v' + data.latest_version;
     changelogBox.style.display = 'block';
     changelogList.innerHTML = '';
     const changes = data.changelog || [];
@@ -797,6 +935,9 @@ function openVersionModal(hasUpdate, data) {
     downloadBtn.style.display = 'block';
     downloadBtn.textContent = '下载安装';
   } else {
+    verLatest.style.display = 'none';
+    verLatestLabel.style.display = 'none';
+    verDivider.style.display = 'none';
     changelogBox.style.display = 'none';
     downloadBtn.style.display = 'none';
   }

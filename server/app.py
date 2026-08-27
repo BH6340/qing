@@ -37,13 +37,14 @@ LATEST_VERSION = {
 
 # === LATEST_BETA_VERSION_START ===
 LATEST_BETA_VERSION = {
-    "version": "1.1.0-beta.5",
+    "version": "1.1.0-beta.6",
     "release_date": "2026-08-27",
     "changelog": [
+        "版本更新弹窗优化：最新版本与当前版本上下排列",
+        "Beta切换弹窗优化：导出备份/直接下载二选一列表",
         "修复Service Worker在APK环境下误注册导致缓存旧文件的问题",
-        "新增Browser插件，导出数据直接跳系统浏览器下载",
-        "发布脚本clean阶段新增删除assets/public确保资源全新同步",
-        "sw.js缓存版本升级到v5新增config.js缓存"
+        "新增Browser插件导出数据直接跳系统浏览器下载",
+        "发布脚本clean阶段新增删除assets/public确保资源全新同步"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,
