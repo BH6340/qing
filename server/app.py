@@ -31,14 +31,13 @@ LATEST_VERSION = {
 
 # === LATEST_BETA_VERSION_START ===
 LATEST_BETA_VERSION = {
-    "version": "1.1.0-beta.2",
+    "version": "1.1.0-beta.3",
     "release_date": "2026-08-27",
     "changelog": [
-        "修复数据导出功能（Filesystem 插件注册 + 外部存储目录）",
-        "Beta 切换改为下载 APK 安装，不再切通道标记",
-        "修复版本比较函数，支持 beta 版本号",
-        "清理服务器旧 APK，只保留最新版本",
-        "版本更新和 Beta 切换支持浏览器回退下载"
+        "新增config.js统一配置文件，版本号通道API地址集中管理",
+        "优化发布脚本，构建前自动clean旧缓存、构建后验证APK内版本号",
+        "优化数据导出，四重回退机制",
+        "修复构建缓存导致版本号不更新的问题"
     ],
     "apk_url": "/api/download/apk/beta",
     "is_force_update": False,

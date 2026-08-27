@@ -26,14 +26,24 @@ const Store = (function() {
 
   let STORAGE_KEY = getStorageKey();
 
-  // 自动检测通道：从 HTML meta 标签判断
-  // <meta name="app-channel" content="beta"> 表示 Beta 版 APK
+  // 自动检测通道：优先从 APP_CONFIG 读取，其次从 meta 标签读取
   // 仅在用户未手动切换过通道时生效，不影响用户后续手动切换
   (function autoDetectChannel() {
-    var meta = document.querySelector('meta[name="app-channel"]');
-    if (meta && meta.content === 'beta') {
+    var detectedChannel = null;
+    // 优先从 config.js 读取
+    if (window.APP_CONFIG && window.APP_CONFIG.channel) {
+      detectedChannel = window.APP_CONFIG.channel;
+    }
+    // 其次从 meta 标签读取（兼容旧版本）
+    if (!detectedChannel) {
+      var meta = document.querySelector('meta[name="app-channel"]');
+      if (meta && meta.content) {
+        detectedChannel = meta.content;
+      }
+    }
+    if (detectedChannel === 'beta' || detectedChannel === 'formal') {
       if (!localStorage.getItem(CHANNEL_KEY)) {
-        localStorage.setItem(CHANNEL_KEY, 'beta');
+        localStorage.setItem(CHANNEL_KEY, detectedChannel);
         STORAGE_KEY = getStorageKey();
       }
     }

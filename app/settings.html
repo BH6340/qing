@@ -529,14 +529,14 @@
   </div>
 </div>
 
+<script src="js/config.js"></script>
 <script src="js/storage.js"></script>
 <script>
-const APP_VERSION = '1.1.0-beta.2';
+const APP_VERSION = APP_CONFIG.version;
+const API_BASE = APP_CONFIG.apiBase;
 let confirmCallback = null;
 
 const isNativeApp = window.Capacitor && (window.Capacitor.getPlatform ? window.Capacitor.getPlatform() === 'android' : window.Capacitor.platform === 'android');
-
-const API_BASE = 'https://qing6340.duckdns.org';
 
 function init() {
   Store.load();
@@ -583,34 +583,97 @@ function exportData() {
 }
 
 async function downloadJSON(jsonStr, filename, successMsg) {
-  // 原生APP：用 Filesystem 插件写到外部存储
   const FS = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
-  if (FS) {
+  const FileOpener = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.FileOpener;
+
+  // ===== 方案1: Filesystem 写入 + FileOpener 打开 =====
+  if (FS && isNativeApp) {
     try {
+      // 写到缓存目录，然后让用户选择怎么处理
       const result = await FS.writeFile({
         path: filename,
         data: jsonStr,
-        directory: 'Documents',
+        directory: 'Cache',
         encoding: 'utf8',
         recursive: true
       });
-      Store.toast('已保存：文件管理/文档/' + filename);
+
+      // 获取文件的真实路径
+      let fileUri = result.uri;
+      if (!fileUri && result.path) {
+        fileUri = result.path;
+      }
+
+      // 尝试用 FileOpener 打开，用户可以选择"保存到文件"或分享
+      if (FileOpener && fileUri) {
+        try {
+          await FileOpener.open({
+            filePath: fileUri,
+            contentType: 'application/json',
+            openWithDefault: false
+          });
+          Store.toast('请选择保存或分享方式');
+          return;
+        } catch (e) {
+          console.log('FileOpener 打开失败，继续尝试其他方式:', e.message);
+        }
+      }
+
+      // FileOpener 不可用或失败，至少告诉用户文件位置
+      Store.toast('已保存到应用缓存：' + filename);
       return;
     } catch (e) {
-      console.log('Filesystem 导出失败，回退浏览器下载:', e.message);
+      console.log('Filesystem 写入失败，尝试下一种方式:', e.message);
     }
   }
-  // 浏览器回退：a.download
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  Store.toast(successMsg || '数据已导出');
+
+  // ===== 方案2: Web Share API 系统分享 =====
+  if (navigator.share && window.Blob && window.File) {
+    try {
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const file = new File([blob], filename, { type: 'application/json' });
+      await navigator.share({
+        title: '轻日历数据备份',
+        text: '轻日历数据备份文件',
+        files: [file]
+      });
+      Store.toast('已调出分享面板');
+      return;
+    } catch (e) {
+      // 用户取消分享不算错误
+      if (e.name !== 'AbortError') {
+        console.log('Web Share 失败，继续尝试下一种方式:', e.message);
+      }
+    }
+  }
+
+  // ===== 方案3: 复制到剪贴板（兜底） =====
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(jsonStr);
+      Store.toast('数据已复制到剪贴板，可粘贴保存');
+      return;
+    } catch (e) {
+      console.log('剪贴板复制失败，尝试最后一种方式:', e.message);
+    }
+  }
+
+  // ===== 方案4: 浏览器 a.download（PWA/浏览器环境） =====
+  try {
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    Store.toast(successMsg || '数据已导出');
+  } catch (e) {
+    console.log('所有导出方式都失败了:', e.message);
+    Store.toast('导出失败，请截图保存数据');
+  }
 }
 
 function importData() {
