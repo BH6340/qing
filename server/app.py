@@ -78,13 +78,13 @@ def check_version():
 
 @app.route('/api/download/apk')
 def download_apk():
-    apk_path = os.path.join(APK_DIR, 'app-release.apk')
+    apk_path = os.path.join(APK_DIR, 'app-formal-latest.apk')
     if not os.path.exists(apk_path):
-        apk_path = os.path.join(APK_DIR, 'app-debug.apk')
+        apk_path = os.path.join(APK_DIR, 'app-release.apk')
     if not os.path.exists(apk_path):
         return jsonify({"error": "APK not found"}), 404
     return send_from_directory(
-        os.path.dirname(apk_path),
+        APK_DIR,
         os.path.basename(apk_path),
         as_attachment=True,
         download_name='qing-calendar.apk'

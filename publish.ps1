@@ -98,15 +98,15 @@ Write-Host ""
 
 # ===== 4. Copy APK =====
 Write-Host "[4/7] Copy APK..." -ForegroundColor Cyan
-Copy-Item $apkPath "$projectDir\apks\app-release.apk" -Force
-Write-Host "  Done" -ForegroundColor Green
+Copy-Item $apkPath "$projectDir\apks\app-formal-latest.apk" -Force
+Write-Host "  -> apks\app-formal-latest.apk" -ForegroundColor Green
 Write-Host ""
 
-# ===== 5. Git push =====
+# ===== 5. Git push (code only) =====
 Write-Host "[5/7] Git push..." -ForegroundColor Cyan
 Push-Location $projectDir
 $ErrorActionPreference = "Continue"
-git add .gitignore app/ server/ apks/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
+git add .gitignore app/ server/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
 git commit -m "v${Version}: $($changeLines[0])" 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"
@@ -114,8 +114,11 @@ Pop-Location
 Write-Host "  Done" -ForegroundColor Green
 Write-Host ""
 
-# ===== 6. Server deploy =====
-Write-Host "[6/7] Server deploy..." -ForegroundColor Cyan
+# ===== 6. SCP upload & server deploy =====
+Write-Host "[6/7] Upload APK & server deploy..." -ForegroundColor Cyan
+Write-Host "  Uploading APK via SCP..." -ForegroundColor Cyan
+scp "$projectDir\apks\app-formal-latest.apk" "${server}:$remoteDir/apks/app-formal-latest.apk" 2>&1 | Out-Null
+Write-Host "  APK uploaded" -ForegroundColor Green
 $ErrorActionPreference = "Continue"
 ssh $server "cd $remoteDir && git pull && docker compose restart" 2>&1
 $ErrorActionPreference = "Stop"

@@ -99,21 +99,24 @@ Write-Host ""
 
 # ===== 5. Copy APK & deploy =====
 Write-Host "[5/6] Copy APK & deploy to server..." -ForegroundColor Cyan
-$betaApkName = "app-beta-$Version.apk"
-Copy-Item $apkPath "$projectDir\apks\$betaApkName" -Force
 Copy-Item $apkPath "$projectDir\apks\app-beta-latest.apk" -Force
-Write-Host "  -> apks\$betaApkName" -ForegroundColor Green
+Write-Host "  -> apks\app-beta-latest.apk" -ForegroundColor Green
 
-# Git push
+# Git push (code only, APK is in .gitignore)
 Push-Location $projectDir
 $ErrorActionPreference = "Continue"
-git add .gitignore app/ server/ apks/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
+git add .gitignore app/ server/ capacitor.config.json docker-compose.yml android/app/src/ android/app/build.gradle android/app/capacitor.build.gradle android/app/proguard-rules.pro android/capacitor.settings.gradle android/gradle.properties android/gradlew android/gradlew.bat android/settings.gradle android/variables.gradle 2>&1 | Out-Null
 git commit -m "beta v${Version}: $($changeLines[0])" 2>&1 | Out-Null
 git push 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"
 Pop-Location
 
-# Server deploy (pull & restart)
+# SCP upload APK to server
+Write-Host "  Uploading APK via SCP..." -ForegroundColor Cyan
+scp "$projectDir\apks\app-beta-latest.apk" "${server}:$remoteDir/apks/app-beta-latest.apk" 2>&1 | Out-Null
+Write-Host "  APK uploaded" -ForegroundColor Green
+
+# Server deploy (pull code & restart)
 $ErrorActionPreference = "Continue"
 ssh $server "cd $remoteDir && git pull && docker compose restart" 2>&1
 $ErrorActionPreference = "Stop"
